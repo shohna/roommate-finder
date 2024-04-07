@@ -6,9 +6,9 @@ app.secret_key = 'secret'
 
 # MySQL Connection
 conn = pymysql.connect(host='localhost',
-                       port=8889,
+                       port=3306,
                        user='root',
-                       password='root',
+                       password='pdscsgy@12770',
                        db='Roomio',
                        charset='utf8mb4',
                        cursorclass=pymysql.cursors.DictCursor)
@@ -114,6 +114,30 @@ def search_units_by_pet():
     cursor.close()
     error_message = 'No matching apartment units found. Please check your input and try again.' if not units else None
     return render_template('home.html', username=session['username'], units=units, error_message=error_message)
+
+@app.route('/unit_building_info', methods=['GET'])
+def unit_building_info():
+    if 'username' in session:
+        unit_id = request.args.get('unit_id')
+        cursor = conn.cursor()
+        query = '''
+            SELECT AU.*, AB.*, GROUP_CONCAT(AI.aType SEPARATOR ', ') AS amenities
+            FROM ApartmentUnit AS AU
+            JOIN ApartmentBuilding AS AB ON AU.CompanyName = AB.CompanyName AND AU.BuildingName = AB.BuildingName
+            LEFT JOIN AmenitiesIn AS AI ON AU.UnitRentID = AI.UnitRentID
+            WHERE AU.UnitRentID = %s
+            GROUP BY AU.UnitRentID
+        '''
+        cursor.execute(query, (unit_id,))
+        unit_info = cursor.fetchone()
+        cursor.close()
+        if unit_info:
+            return render_template('unit_building_info.html', unit_info=unit_info)
+        else:
+            flash('Unit not found')
+            return redirect(url_for('home'))
+    else:
+        return redirect(url_for('login'))
 
 if __name__ == '__main__':
     app.run(debug=True)

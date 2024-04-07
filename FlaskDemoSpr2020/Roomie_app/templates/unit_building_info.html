@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unit and Building Information</title>
+</head>
+<body>
+    <h1>Unit and Building Information</h1>
+    <h2>Unit Details</h2>
+    <p>Unit ID: {{ unit_info.UnitRentID }}</p>
+    <p>Monthly Rent: {{ unit_info.MonthlyRent }}</p>
+    <p>Square Footage: {{ unit_info.squareFootage }}</p>
+    <p>Available Date for Move-In: {{ unit_info.AvailableDateForMoveIn }}</p>
+    <h2>Building Details</h2>
+    <p>Company Name: {{ unit_info.CompanyName }}</p>
+    <p>Building Name: {{ unit_info.BuildingName }}</p>
+    <p>Address: {{ unit_info.AddrNum }} {{ unit_info.AddrStreet }}, {{ unit_info.AddrCity }}, {{ unit_info.AddrState }} {{ unit_info.AddrZipCode }}</p>
+    <p>Year Built: {{ unit_info.YearBuilt }}</p>
+    <h2>Amenities</h2>
+    <p>{{ unit_info.amenities }}</p>
+</body>
+</html>
