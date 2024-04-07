@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Roomio - Home</title>
+</head>
+<body>
+    <h1>Welcome {{ username }}</h1>
+    <a href="{{ url_for('logout') }}">Logout</a>
+    
+    <h2>Search Apartment Units</h2>
+    <form method="GET" action="{{ url_for('search_units') }}">
+        <label>Building Name:</label>
+        <input type="text" name="building_name" required><br>
+        <label>Company Name:</label>
+        <input type="text" name="company_name" required><br>
+        <input type="submit" value="Search">
+    </form>
+    
+    <h2>Search by Pet Information</h2>
+    <form method="GET" action="{{ url_for('search_units_by_pet') }}">
+        <label>Pet Name:</label>
+        <input type="text" name="pet_name" required><br>
+        <input type="submit" value="Search">
+    </form>
+    
+    {% if units %}
+        <h2>Search Results:</h2>
+        <ul>
+            {% for unit in units %}
+                <li>Unit ID: {{ unit.UnitRentID }}</li>
+                <li>Monthly Rent: {{ unit.MonthlyRent }}</li>
+                <li>Square Footage: {{ unit.squareFootage }}</li>
+                <li>Available Date for Move-in: {{ unit.AvailableDateForMoveIn }}</li>
+                <li>Pet Allowed: {{ unit.pet_allowed }}</li>
+                <br>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>{{ error_message }}</p>
+    {% endif %}
+</body>
+</html>
+
