@@ -1,22 +1,32 @@
 from flask import Flask, render_template, request, session, redirect, url_for, flash
-import pymysql.cursors
+import psycopg2
 
 app = Flask(__name__)
 app.secret_key = 'secret'
 
-# MySQL Connection
-conn = pymysql.connect(host='localhost',
-                       port=3306,
-                       user='root',
-                       password='pdscsgy@12770',
-                       db='Roomio',
-                       charset='utf8mb4',
-                       cursorclass=pymysql.cursors.DictCursor)
+
+db_params = {
+    'host': 'database-1.cxeumckggdgy.us-east-2.rds.amazonaws.com',
+    'database': 'postgres',
+    'user': 'postgres',
+    'password': 'pdscsgy1234',
+}
+conn = psycopg2.connect(**db_params)
 
 # Routes
 @app.route('/')
-def index():
-    return render_template('index.html')
+def index():    # Establish a connection to the PostgreSQL database
+    # Create a cursor object
+    cursor = conn.cursor()
+    # Execute a sample SQL query
+    cursor.execute('SELECT version()')
+    # Fetch the result
+    db_version = cursor.fetchone()[0]
+    # Close cursor and connection
+    cursor.close()
+    # Return the database version as a response
+    return f'Database Version: {db_version}'
+    # return render_template('index.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
