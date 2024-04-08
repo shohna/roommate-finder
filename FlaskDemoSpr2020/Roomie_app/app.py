@@ -127,23 +127,30 @@ def search_units_by_pet():
 
 @app.route('/unit_building_info', methods=['GET'])
 def unit_building_info():
+    print("hi2")
     if 'username' in session:
+        print("hi")
         unit_id = request.args.get('unit_id')
         cursor = conn.cursor()
         query = '''
-            SELECT AU.*, AB.*, GROUP_CONCAT(AI.aType SEPARATOR ', ') AS amenities
-            FROM ApartmentUnit AS AU
-            JOIN ApartmentBuilding AS AB ON AU.CompanyName = AB.CompanyName AND AU.BuildingName = AB.BuildingName
-            LEFT JOIN AmenitiesIn AS AI ON AU.UnitRentID = AI.UnitRentID
-            WHERE AU.UnitRentID = %s
-            GROUP BY AU.UnitRentID
+        SELECT AU.*, AB.*, STRING_AGG(AI.aType, ', ') AS amenities
+        FROM ApartmentUnit AU
+        JOIN ApartmentBuilding AB ON AU.CompanyName = AB.CompanyName AND AU.BuildingName = AB.BuildingName
+        LEFT JOIN AmenitiesIn AI ON AU.UnitRentID = AI.UnitRentID
+        WHERE AU.UnitRentID = %s
+        GROUP BY AU.UnitRentID, AU.CompanyName, AU.BuildingName, AB.CompanyName, AB.BuildingName
         '''
+        print("hi3")
         cursor.execute(query, (unit_id,))
         unit_info = cursor.fetchone()
         cursor.close()
+        print("hi4")
         if unit_info:
+            print(unit_info)
+            print("hi5")
             return render_template('unit_building_info.html', unit_info=unit_info)
         else:
+            print("hi6")
             flash('Unit not found')
             return redirect(url_for('home'))
     else:
