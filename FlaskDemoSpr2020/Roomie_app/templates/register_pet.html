@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Pet</title>
+</head>
+<body>
+    <h1>Register Pet</h1>
+    <form method="POST" action="{{ url_for('register_pet') }}">
+        <label for="pet_name">Pet Name:</label>
+        <input type="text" id="pet_name" name="pet_name" required><br>
+        <label for="pet_type">Pet Type:</label>
+        <input type="text" id="pet_type" name="pet_type" required><br>
+        <label for="pet_size">Pet Size:</label>
+        <input type="text" id="pet_size" name="pet_size" required><br>
+        <input type="submit" value="Register Pet">
+    </form>
+</body>
+</html>

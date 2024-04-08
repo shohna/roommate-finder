@@ -127,9 +127,7 @@ def search_units_by_pet():
 
 @app.route('/unit_building_info', methods=['GET'])
 def unit_building_info():
-    print("hi2")
     if 'username' in session:
-        print("hi")
         unit_id = request.args.get('unit_id')
         cursor = conn.cursor()
         query = '''
@@ -140,21 +138,64 @@ def unit_building_info():
         WHERE AU.UnitRentID = %s
         GROUP BY AU.UnitRentID, AU.CompanyName, AU.BuildingName, AB.CompanyName, AB.BuildingName
         '''
-        print("hi3")
         cursor.execute(query, (unit_id,))
         unit_info = cursor.fetchone()
         cursor.close()
-        print("hi4")
         if unit_info:
-            print(unit_info)
-            print("hi5")
             return render_template('unit_building_info.html', unit_info=unit_info)
         else:
-            print("hi6")
             flash('Unit not found')
             return redirect(url_for('home'))
     else:
         return redirect(url_for('login'))
+
+# Routes for registering and editing pets
+@app.route('/register_pet', methods=['GET', 'POST'])
+def register_pet():
+    if request.method == 'POST':
+        pet_name = request.form['pet_name']
+        pet_type = request.form['pet_type']
+        pet_size = request.form['pet_size']
+        # Add pet registration details to the Pets table
+        cursor = conn.cursor()
+        query = 'INSERT INTO Pets (username, PetName, PetType, PetSize) VALUES (%s, %s, %s, %s)'
+        cursor.execute(query, (session['username'], pet_name, pet_type, pet_size))
+        conn.commit()
+        cursor.close()
+        flash('Pet registration successful.')
+        return redirect(url_for('home'))
+    return render_template('register_pet.html')
+
+@app.route('/edit_pet/<string:pet_name>', methods=['GET', 'POST'])
+def edit_pet(pet_name):
+    cursor = conn.cursor()
+    print("hi")
+    query = "SELECT * FROM Pets WHERE username = %s AND petname ILIKE %s"
+    cursor.execute(query, (session.get('username'), pet_name))
+    pet_info = cursor.fetchone()
+    cursor.close()
+    print("hi3")
+    print(pet_info)
+    if not pet_info:
+        flash('Pet not found or you are not authorized to edit this pet.')
+        return redirect(url_for('home'))
+
+    if request.method == 'POST':
+        new_pet_name = request.form['pet_name']
+        pet_type = request.form['pet_type']
+        pet_size = request.form['pet_size']
+        # Update pet information in the Pets table
+        cursor = conn.cursor()
+        update_query = 'UPDATE Pets SET PetName = %s, PetType = %s, PetSize = %s WHERE username = %s AND petname = %s'
+        cursor.execute(update_query, (new_pet_name, pet_type, pet_size, session['username'], pet_name))
+        conn.commit()
+        cursor.close()
+        flash('Pet information updated.')
+        return redirect(url_for('home'))
+
+    return render_template('edit_pet.html', pet_info=pet_info)
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
