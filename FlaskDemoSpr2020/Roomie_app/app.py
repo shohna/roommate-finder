@@ -197,6 +197,27 @@ def edit_pet(pet_name):
 
     return render_template('edit_pet.html', pet_info=pet_info)
 
+@app.route('/search_interest', methods=['GET', 'POST'])
+def search_interest():
+    if request.method == 'POST':
+        move_in_date = request.form['move_in_date']
+        roommate_count = request.form['roommate_count']
+        cursor = conn.cursor()
+
+        # SQL query to fetch interests based on move-in date and roommate count
+        query = """
+                SELECT I.username, I.UnitRentID, U.first_name, U.last_name, U.DOB, U.gender, U.email, U.Phone
+                FROM Interests AS I
+                JOIN Users AS U ON I.username = U.username
+                WHERE I.MoveInDate = %s AND I.RoommateCnt = %s
+                """
+        cursor.execute(query, (move_in_date, roommate_count))
+        interests = cursor.fetchall()
+            
+        # Pass the fetched interests to the HTML template for rendering
+        return render_template('search_interest.html', interests=interests)
+    
+    return render_template('search_interest.html')
 
 
 if __name__ == '__main__':
