@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, session, redirect, url_for, flash
 import psycopg2
+import json
 
 app = Flask(__name__)
 app.secret_key = 'secret'
@@ -115,13 +116,14 @@ def search_units_by_pet():
             FROM ApartmentUnit AU
             JOIN PetPolicy PP ON AU.CompanyName = PP.CompanyName AND AU.BuildingName = PP.BuildingName
             JOIN Pets P ON P.username = %s AND PP.PetType = P.PetType AND PP.PetSize = P.PetSize
-            WHERE P.PetName = %s AND PP.isAllowed = 1
+            WHERE P.PetName = %s AND PP.isAllowed = false
         )
     '''
     # cursor.execute(query, (session['username'], pet_name))
     cursor.execute(query, (session['username'], session['username'], pet_name))
     units = cursor.fetchall()
     cursor.close()
+    print(units)
     error_message = 'No matching apartment units found. Please check your input and try again.' if not units else None
     return render_template('home.html', username=session['username'], units=units, error_message=error_message)
 

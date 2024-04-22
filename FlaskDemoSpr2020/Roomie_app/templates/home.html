@@ -27,11 +27,11 @@
         <h2>Search Results:</h2>
         <ul>
             {% for unit in units %}
-                <li>Unit ID: {{ unit.UnitRentID }}</li>
-                <li>Monthly Rent: {{ unit.MonthlyRent }}</li>
-                <li>Square Footage: {{ unit.squareFootage }}</li>
-                <li>Available Date for Move-in: {{ unit.AvailableDateForMoveIn }}</li>
-                <li>Pet Allowed: {{ unit.pet_allowed }}</li>
+                <li>Unit ID: {{ unit[0] }}</li>
+                <li>Monthly Rent: {{ unit[4] }}</li>
+                <li>Square Footage: {{ unit[5] }}</li>
+                <li>Available Date for Move-in: {{ unit[6] }}</li>
+                <li>Pet Allowed: {{ unit[7] }}</li>
                 <br>
             {% endfor %}
         </ul>
