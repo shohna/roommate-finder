@@ -98,6 +98,7 @@ def search_units():
     query = 'SELECT * FROM ApartmentUnit WHERE CompanyName = %s AND BuildingName = %s'
     cursor.execute(query, (company_name, building_name))
     units = cursor.fetchall()
+    print(units)
     cursor.close()
     return render_template('home.html', username=session['username'], units=units)
 
@@ -219,6 +220,37 @@ def search_interest():
     
     return render_template('search_interest.html')
 
+def calculate_average_rent(zipcode):
+    cursor = conn.cursor()
+    
+    # SQL query to calculate average monthly rent based on zipcode and number of rooms
+    query = """
+            SELECT AVG(MonthlyRent) AS average_rent 
+            FROM ApartmentUnit AS AU
+            JOIN ApartmentBuilding AS AB 
+            ON AU.CompanyName = AB.CompanyName AND AU.BuildingName = AB.BuildingName
+            WHERE AB.AddrZipCode = %s
+            """
+    cursor.execute(query, (zipcode,))    
+    result = cursor.fetchone()
+    
+    cursor.close()
+    
+    return result[0] if result else None
+
+@app.route('/estimate_rent', methods=['GET', 'POST'])
+def estimate_rent():
+    if request.method == 'POST':
+        zipcode = request.form['zipcode']
+        # num_rooms = request.form['num_rooms']
+        
+        # Calculate average monthly rent based on user input
+        average_rent = calculate_average_rent(zipcode)
+        
+        # Pass the calculated average rent to the template for rendering
+        return render_template('rent_estimate.html', average_rent=round(average_rent, 2))
+    
+    return render_template('rent_estimate.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
