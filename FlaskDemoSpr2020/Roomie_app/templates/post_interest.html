@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Post Interest - Roomio</title>
+</head>
+<body>
+    <h1>Post New Interest</h1>
+    <form method="POST" action="{{ url_for('post_interest') }}">
+        <label for="unit_id">Select Unit:</label>
+        <select id="unit_id" name="unit_id" required>
+            {% for unit in units %}
+            <option value="{{ unit[0] }}">{{ unit[1] }} - {{ unit[2] }} - {{ unit[3] }}</option>
+            {% endfor %}
+        </select><br>
+        <label for="roommate_count">Preferred Number of Roommates:</label>
+        <input type="number" id="roommate_count" name="roommate_count" required><br>
+        <label for="move_in_date">Move-in Date:</label>
+        <input type="date" id="move_in_date" name="move_in_date" required><br>
+        <button type="submit">Post Interest</button>
+    </form>
+    <a href="{{ url_for('home') }}">Back to Home</a>
+</body>
+</html>
+
