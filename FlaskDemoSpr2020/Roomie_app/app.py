@@ -21,14 +21,19 @@ conn = psycopg2.connect(**db_params)
 def index():
     return render_template('index.html')
 
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = escape(request.form['username'])
-        password = request.form['password']  # Assuming password is hashed and checked securely
+        password = request.form['password']
+        salt = "static_salt"
+        salted_password = salt + password
+        hashed_password = hashlib.sha256(salted_password.encode()).hexdigest()  # Hash the salted password
+        print(hashed_password)
         cursor = conn.cursor()
         query = 'SELECT * FROM Users WHERE username = %s AND passwd = %s'
-        cursor.execute(query, (username, password))
+        cursor.execute(query, (username, hashed_password))
         user = cursor.fetchone()
         cursor.close()
         if user:
@@ -38,11 +43,16 @@ def login():
             flash('Invalid username or password')
     return render_template('login.html')
 
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         username = escape(request.form['username'])
-        password = request.form['password']  # Again, assume secure handling of passwords
+        password = request.form['password']
+        salt = "static_salt"  # Simple static salt
+        salted_password = salt + password
+        hashed_password = hashlib.sha256(salted_password.encode()).hexdigest()  # Hash the salted password
+
         first_name = escape(request.form['first_name'])
         last_name = escape(request.form['last_name'])
         dob = request.form['dob']
@@ -52,7 +62,7 @@ def register():
 
         cursor = conn.cursor()
         query = 'INSERT INTO Users (username, passwd, first_name, last_name, DOB, gender, email, Phone) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)'
-        cursor.execute(query, (username, password, first_name, last_name, dob, gender, email, phone))
+        cursor.execute(query, (username, hashed_password, first_name, last_name, dob, gender, email, phone))
         conn.commit()
         cursor.close()
         flash('Registration successful. Please log in.')
