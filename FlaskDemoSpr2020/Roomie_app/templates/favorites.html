@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unit and Building Information</title>
+</head>
+<body>
+    <h1>Favorites</h1>
+    {% for unit in favorite_units %}
+    <div>
+       
+        <h2>Unit Details</h2>
+        <p>Unit ID: {{ unit[0] }}</p>
+        <p>Monthly Rent: {{ unit[4] }}</p>
+        <p>Square Footage: {{ unit[5] }}</p>
+        <p>Available Date for Move-In: {{ unit[6] }}</p>
+        <h2>Building Details</h2>
+        <p>Company Name: {{ unit[1] }}</p>
+        <p>Building Name: {{ unit[2] }}</p>
+        <p>Address: {{ unit[9] }} {{ unit[10] }}, {{ unit[11] }}, {{ unit[12] }} {{ unit[13] }}</p>
+        <p>Year Built: {{ unit[14] }}</p>
+        <h2>Amenities</h2>
+        <p>{{ unit[15] }}</p>
+
+    </div>
+    {% endfor %}
+</body>
+</html>

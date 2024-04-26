@@ -252,5 +252,45 @@ def estimate_rent():
     
     return render_template('rent_estimate.html')
 
+@app.route('/add_to_favorites', methods=['POST'])
+def add_to_favorites():
+    if 'username' in session:
+        username = session['username']
+        unit_id = request.form['unit_id']
+        cursor = conn.cursor()
+        # Check if the unit is already in favorites
+        cursor.execute('SELECT * FROM Favorites WHERE username = %s AND UnitRentID = %s', (username, unit_id))
+        if not cursor.fetchone():
+            # Add the unit to favorites
+            cursor.execute('INSERT INTO Favorites (username, UnitRentID) VALUES (%s, %s)', (username, unit_id))
+            conn.commit()
+            flash('Unit added to favorites.')
+        else:
+            flash('Unit already in favorites.')
+        cursor.close()
+        return redirect(url_for('home'))
+    else:
+        return redirect(url_for('login'))
+
+# Route for displaying favorite units
+@app.route('/favorites')
+def favorites():
+    if 'username' in session:
+        username = session['username']
+        cursor = conn.cursor()
+        # Fetch favorite units for the current user
+        cursor.execute("""
+            SELECT AU.*, AB.*
+            FROM ApartmentUnit AU
+            JOIN ApartmentBuilding AB ON AU.CompanyName = AB.CompanyName AND AU.BuildingName = AB.BuildingName
+            JOIN Favorites F ON AU.UnitRentID = F.UnitRentID
+            WHERE F.username = %s
+        """, (username,))
+        favorite_units = cursor.fetchall()
+        cursor.close()
+        return render_template('favorites.html', favorite_units=favorite_units)
+    else:
+        return redirect(url_for('login'))
+
 if __name__ == '__main__':
     app.run(debug=True)
