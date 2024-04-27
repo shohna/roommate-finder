@@ -1,8 +1,63 @@
-
 <!DOCTYPE html>
 <html>
 <head>
     <title>Roomio - Home</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        h1, h2, h3, h4 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="text"],
+        input[type="number"],
+        textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        input[type="submit"] {
+            padding: 8px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin-bottom: 10px;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #007bff;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
     <h1>Welcome {{ username }}</h1>
@@ -26,6 +81,7 @@
                 <li>Monthly Rent: {{ unit.4 }}</li>
                 <li>Square Footage: {{ unit.5 }}</li>
                 <li>Available Date for Move-in: {{ unit.6 }}</li>
+                <li>Average Rent in city for similar area: {{ unit.10 }}</li>
                 <li>Your pet Allowed: {{ unit.7 }}</li>
                 <li>Pet Registration Fee: {{ unit.8 }}</li>
                 <li>Pet Monthly Fee: {{ unit.9 }}</li>
