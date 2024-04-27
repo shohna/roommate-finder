@@ -1,18 +1,12 @@
+
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Roomio - Register</title>
+    <title>Register - Roomio</title>
 </head>
 <body>
     <h1>Register to Roomio</h1>
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            {% for message in messages %}
-                <p>{{ message }}</p>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-    <form method="POST">
+    <form method="POST" action="{{ url_for('register') }}">
         <label>Username:</label>
         <input type="text" name="username" required><br>
         <label>Password:</label>
@@ -27,7 +21,7 @@
         <select name="gender" required>
             <option value="1">Male</option>
             <option value="2">Female</option>
-            <option value="3">Other</option>
+            <option value="9">Other</option>
         </select><br>
         <label>Email:</label>
         <input type="email" name="email" required><br>
@@ -35,5 +29,8 @@
         <input type="tel" name="phone" required><br>
         <input type="submit" value="Register">
     </form>
+
+    <a href="{{ url_for('home') }}">Back to Home</a>
+    
 </body>
 </html>
