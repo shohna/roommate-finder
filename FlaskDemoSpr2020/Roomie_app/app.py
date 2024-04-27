@@ -93,6 +93,7 @@ def search_units():
     query = 'SELECT * FROM ApartmentUnit WHERE CompanyName = %s AND BuildingName = %s'
     cursor.execute(query, (company_name, building_name))
     units = cursor.fetchall()
+    print(units)
     cursor.close()
     error_message = 'No matching apartment units found. Please check your input and try again.' if not units else None
     return render_template('unit_search.html', username=escape(session['username']), units=units, error_message=error_message)
@@ -180,6 +181,19 @@ def edit_pet(pet_name):
         return redirect(url_for('home'))
 
     return render_template('edit_pet.html', pet_info=pet_info)
+@app.route('/estimate_rent', methods=['GET', 'POST'])
+def estimate_rent():
+    if request.method == 'POST':
+        zipcode = request.form['zipcode']
+        # num_rooms = request.form['num_rooms']
+        
+        # Calculate average monthly rent based on user input
+        average_rent = calculate_average_rent(zipcode)
+        
+        # Pass the calculated average rent to the template for rendering
+        return render_template('rent_estimate.html', average_rent=round(average_rent, 2))
+    
+    return render_template('rent_estimate.html')
 
 
 @app.route('/view_interests', methods=['GET', 'POST'])
@@ -247,7 +261,6 @@ def post_interest():
     cursor.close()
     return render_template('post_interest.html', units=units)
 
-
 @app.route('/advanced_search', methods=['GET', 'POST'])
 def advanced_search():
     if request.method == 'POST':
@@ -272,7 +285,87 @@ def advanced_search():
         amenities = cursor.fetchall()
         cursor.close()
         return render_template('advanced_search.html', amenities=amenities)
+    
+    
+@app.route('/search_interest', methods=['GET', 'POST'])
+def search_interest():
+    if request.method == 'POST':
+        move_in_date = request.form['move_in_date']
+        roommate_count = request.form['roommate_count']
+        cursor = conn.cursor()
 
+        # SQL query to fetch interests based on move-in date and roommate count
+        query = """
+                SELECT I.username, I.UnitRentID, U.first_name, U.last_name, U.DOB, U.gender, U.email, U.Phone
+                FROM Interests AS I
+                JOIN Users AS U ON I.username = U.username
+                WHERE I.MoveInDate = %s AND I.RoommateCnt = %s
+                """
+        cursor.execute(query, (move_in_date, roommate_count))
+        interests = cursor.fetchall()
+            
+        # Pass the fetched interests to the HTML template for rendering
+        return render_template('search_interest.html', interests=interests)
+    
+    return render_template('search_interest.html')
+
+def calculate_average_rent(zipcode):
+    cursor = conn.cursor()
+    
+    # SQL query to calculate average monthly rent based on zipcode and number of rooms
+    query = """
+            SELECT AVG(MonthlyRent) AS average_rent 
+            FROM ApartmentUnit AS AU
+            JOIN ApartmentBuilding AS AB 
+            ON AU.CompanyName = AB.CompanyName AND AU.BuildingName = AB.BuildingName
+            WHERE AB.AddrZipCode = %s
+            """
+    cursor.execute(query, (zipcode,))    
+    result = cursor.fetchone()
+    
+    cursor.close()
+    
+    return result[0] if result else None
+
+@app.route('/add_to_favorites', methods=['POST'])
+def add_to_favorites():
+    if 'username' in session:
+        username = session['username']
+        unit_id = request.form['unit_id']
+        cursor = conn.cursor()
+        # Check if the unit is already in favorites
+        cursor.execute('SELECT * FROM Favorites WHERE username = %s AND UnitRentID = %s', (username, unit_id))
+        if not cursor.fetchone():
+            # Add the unit to favorites
+            cursor.execute('INSERT INTO Favorites (username, UnitRentID) VALUES (%s, %s)', (username, unit_id))
+            conn.commit()
+            flash('Unit added to favorites.')
+        else:
+            flash('Unit already in favorites.')
+        cursor.close()
+        return redirect(url_for('home'))
+    else:
+        return redirect(url_for('login'))
+
+# Route for displaying favorite units
+@app.route('/favorites')
+def favorites():
+    if 'username' in session:
+        username = session['username']
+        cursor = conn.cursor()
+        # Fetch favorite units for the current user
+        cursor.execute("""
+            SELECT AU.*, AB.*
+            FROM ApartmentUnit AU
+            JOIN ApartmentBuilding AB ON AU.CompanyName = AB.CompanyName AND AU.BuildingName = AB.BuildingName
+            JOIN Favorites F ON AU.UnitRentID = F.UnitRentID
+            WHERE F.username = %s
+        """, (username,))
+        favorite_units = cursor.fetchall()
+        cursor.close()
+        return render_template('favorites.html', favorite_units=favorite_units)
+    else:
+        return redirect(url_for('login'))
 
 if __name__ == '__main__':
     app.run(debug=True)

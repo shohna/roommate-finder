@@ -16,5 +16,52 @@
         <li><a href="{{ url_for('advanced_search') }}">Advanced Search</a></li>
     </ul>
     <a href="{{ url_for('logout') }}">Logout</a>
+    
+    <h2>Search Apartment Units</h2>
+    <form method="GET" action="{{ url_for('search_units') }}">
+        <label>Building Name:</label>
+        <input type="text" name="building_name" required><br>
+        <label>Company Name:</label>
+        <input type="text" name="company_name" required><br>
+        <input type="submit" value="Search">
+    </form>
+    
+    <h2>Search by Pet Information</h2>
+    <form method="GET" action="{{ url_for('search_units_by_pet') }}">
+        <label>Pet Name:</label>
+        <input type="text" name="pet_name" required><br>
+        <input type="submit" value="Search">
+    </form>
+    
+    {% if units %}
+        <h2>Search Results:</h2>
+        <ul>
+            {% for unit in units %}
+                <li>Unit ID: {{ unit[0] }}</li>
+                <li>Monthly Rent: {{ unit[4] }}</li>
+                <li>Square Footage: {{ unit[5] }}</li>
+                <li>Available Date for Move-in: {{ unit[6] }}</li>
+                <li>Pet Allowed: {{ unit[7] }}</li>
+                <br>
+
+                <form action="/add_to_favorites" method="POST" onsubmit="return addToFavorites()">
+                    <input type="hidden" name="unit_id" value="{{ unit[0] }}">
+                    <button type="submit">Add to Favorites</button>
+                </form>
+
+                <script>
+                    function addToFavorites() {
+                        // Display an alert when adding to favorites
+                        alert("Unit added to favorites.");
+                        return true; // Continue form submission
+                    }
+                </script>
+            {% endfor %}
+                <br>
+            
+        </ul>
+    {% else %}
+        <p>{{ error_message }}</p>
+    {% endif %}
 </body>
 </html>
