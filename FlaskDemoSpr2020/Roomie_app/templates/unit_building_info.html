@@ -4,23 +4,62 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unit and Building Information</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        h1, h2, h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        p {
+            margin-bottom: 5px;
+        }
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .info-container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .unit-details, .building-details, .amenities {
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Unit and Building Information</h1>
-    <h2>Unit Details</h2>
-    <p>Unit ID: {{ unit_info[0] }}</p>
-    <p>Monthly Rent: {{ unit_info[4] }}</p>
-    <p>Square Footage: {{ unit_info[5] }}</p>
-    <p>Available Date for Move-In: {{ unit_info[6] }}</p>
-    <h2>Building Details</h2>
-    <p>Company Name: {{ unit_info[1] }}</p>
-    <p>Building Name: {{ unit_info[2] }}</p>
-    <p>Address: {{ unit_info[9] }} {{ unit_info[10] }}, {{ unit_info[11] }}, {{ unit_info[12] }} {{ unit_info[13] }}</p>
-    <p>Year Built: {{ unit_info[14] }}</p>
-    <h2>Amenities</h2>
-    <p>{{ unit_info[15] }}</p>
-
-    <a href="{{ url_for('home') }}">Back to Home</a>
-    
+    <div class="info-container">
+        <h1>Unit and Building Information</h1>
+        <div class="unit-details">
+            <h2>Unit Details</h2>
+            <p>Unit ID: {{ unit_info[0] }}</p>
+            <p>Monthly Rent: {{ unit_info[4] }}</p>
+            <p>Square Footage: {{ unit_info[5] }}</p>
+            <p>Available Date for Move-In: {{ unit_info[6] }}</p>
+        </div>
+        <div class="building-details">
+            <h2>Building Details</h2>
+            <p>Company Name: {{ unit_info[1] }}</p>
+            <p>Building Name: {{ unit_info[2] }}</p>
+            <p>Address: {{ unit_info[9] }} {{ unit_info[10] }}, {{ unit_info[11] }}, {{ unit_info[12] }} {{ unit_info[13] }}</p>
+            <p>Year Built: {{ unit_info[14] }}</p>
+        </div>
+        <div class="amenities">
+            <h2>Amenities</h2>
+            <p>{{ unit_info[15] }}</p>
+        </div>
+        <a href="{{ url_for('home') }}">Back to Home</a>
+    </div>
 </body>
 </html>

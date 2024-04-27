@@ -1,9 +1,49 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>View Interests - Roomio</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        select, button {
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin-bottom: 20px;
+        }
+        li {
+            margin-bottom: 10px;
+        }
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .no-interests {
+            color: #f00;
+        }
+    </style>
 </head>
 <body>
     <h1>View Interests</h1>
@@ -20,7 +60,7 @@
     </form>
     <ul>
         {% if not interests %}
-            <p>No interests found for this unit number</p>
+            <p class="no-interests">No interests found for this unit number</p>
         {% endif %}
         {% for interest in interests %}
             <li>Username: {{ interest[1] }}</li>
@@ -31,6 +71,3 @@
     <a href="{{ url_for('home') }}">Back to Home</a>
 </body>
 </html>
-
-
-

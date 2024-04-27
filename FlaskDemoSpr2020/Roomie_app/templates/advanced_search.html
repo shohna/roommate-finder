@@ -1,8 +1,69 @@
-
 <!DOCTYPE html>
 <html>
 <head>
     <title>Advanced Search</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        h1, h2, h3, h4 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="number"],
+        input[type="checkbox"] {
+            margin-bottom: 10px;
+        }
+        input[type="number"],
+        input[type="checkbox"],
+        input[type="submit"] {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        input[type="number"]:focus,
+        input[type="checkbox"]:focus,
+        input[type="submit"]:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        input[type="submit"] {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin-bottom: 10px;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #007bff;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
     <h1>Advanced Search of Apartment Units</h1>
@@ -32,12 +93,13 @@
                 <li>Monthly Rent: {{ unit[4] }}</li>
                 <li>Square Footage: {{ unit[5] }}</li>
                 <li>Available Date for Move-in: {{ unit[6] }}</li>
+                <li>Average Rent in city for similar area: {{ unit[7] }}</li>
                 <br>
             {% endfor %}
         </ul>
     {% endif %}
 
-    <a href="{{ url_for('home') }}">Back to Home</a>
+    <a href="{{ url_for('home') }}" class="back-link">Back to Home</a>
 
 </body>
 </html>

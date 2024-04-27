@@ -3,6 +3,7 @@ import psycopg2
 import bcrypt
 import hashlib
 import os
+import math
 
 app = Flask(__name__)
 app.secret_key = 'secret'
@@ -83,9 +84,59 @@ def search_units():
     query = 'SELECT * FROM ApartmentUnit WHERE CompanyName = %s AND BuildingName = %s'
     cursor.execute(query, (company_name, building_name))
     units = cursor.fetchall()
-    cursor.close()
+    # Fetch comments for each unit
+    unit_comments = {}
+    for unit in units:
+        unit_comments[unit[0]] = fetch_comments_for_unit(unit[0])
+    new_units = []
+    for unit in units:
+        avg_price_query = '''
+            SELECT AVG(MonthlyRent) AS avg_rent 
+            FROM ApartmentUnit 
+            WHERE SquareFootage BETWEEN 0.9 * %s AND 1.1 * %s 
+            AND UnitRentID IN (
+                SELECT AU.UnitRentID
+                FROM ApartmentUnit AU
+                INNER JOIN ApartmentBuilding AB ON AU.CompanyName = AB.CompanyName AND AU.BuildingName = AB.BuildingName
+                WHERE AB.CompanyName = %s
+                    AND AB.BuildingName = %s
+            );
+        '''
+        # Convert unit[5] (SquareFootage) to float or decimal if necessary
+        avg_price_params = (float(unit[5]), float(unit[5]), unit[1], unit[2])  # Assuming unit[1] is CompanyName, unit[2] is BuildingName
+        cursor.execute(avg_price_query, avg_price_params)
+        avg_rent = cursor.fetchone()[0]  # Get the average rent
+        unit = unit + (math.ceil(avg_rent),)  # Add the average rent to the unit tuple
+        new_units.append(unit)
+    print(new_units)
     error_message = 'No matching apartment units found. Please check your input and try again.' if not units else None
-    return render_template('unit_search.html', username=escape(session['username']), units=units, error_message=error_message)
+    cursor.close()
+    return render_template('unit_search.html', username=escape(session['username']), units=new_units, unit_comments=unit_comments, error_message=error_message)
+
+@app.route('/add_comment', methods=['POST'])
+def add_comment():
+    unit_rent_id = request.form['unit_rent_id']
+    username = session['username']
+    comment_text = request.form['comment_text']
+    rating = request.form['rating']
+    
+    cursor = conn.cursor()
+    query = 'INSERT INTO Comments (UnitRentID, username, CommentText, Rating, CommentDate) VALUES (%s, %s, %s, %s, CURRENT_DATE)'
+    cursor.execute(query, (unit_rent_id, username, comment_text, rating))
+    conn.commit()
+    cursor.close()
+
+    return redirect(url_for('search_units'))
+
+
+def fetch_comments_for_unit(unit_id):
+    cursor = conn.cursor()
+    query = 'SELECT username, CommentText, Rating FROM Comments WHERE UnitRentID = %s ORDER BY CommentDate DESC'
+    cursor.execute(query, (unit_id,))
+    comments = [{'username': row[0], 'CommentText': row[1], 'Rating': row[2]} for row in cursor.fetchall()]
+    
+    cursor.close()
+    return comments
 
 
 @app.route('/search_units_by_pet', methods=['GET'])
@@ -102,9 +153,30 @@ def search_units_by_pet():
     '''
     cursor.execute(query, (session['username'], pet_name))
     units = cursor.fetchall()
+    new_units = []
+    for unit in units:
+        avg_price_query = '''
+            SELECT AVG(MonthlyRent) AS avg_rent 
+            FROM ApartmentUnit 
+            WHERE SquareFootage BETWEEN 0.9 * %s AND 1.1 * %s 
+            AND UnitRentID IN (
+                SELECT AU.UnitRentID
+                FROM ApartmentUnit AU
+                INNER JOIN ApartmentBuilding AB ON AU.CompanyName = AB.CompanyName AND AU.BuildingName = AB.BuildingName
+                WHERE AB.CompanyName = %s
+                    AND AB.BuildingName = %s
+            );
+        '''
+        # Convert unit[5] (SquareFootage) to float or decimal if necessary
+        avg_price_params = (float(unit[5]), float(unit[5]), unit[1], unit[2])  # Assuming unit[1] is CompanyName, unit[2] is BuildingName
+        cursor.execute(avg_price_query, avg_price_params)
+        avg_rent = cursor.fetchone()[0]  # Get the average rent
+        unit = unit + (math.ceil(avg_rent),)  # Add the average rent to the unit tuple
+        new_units.append(unit)
+    print(new_units)
     cursor.close()
     error_message = 'No matching apartment units found. Please check your input and try again.' if not units else None
-    return render_template('unit_search_pet.html', username=escape(session['username']), units=units, error_message=error_message)
+    return render_template('unit_search_pet.html', username=escape(session['username']), units=new_units, error_message=error_message)
 
 
 @app.route('/unit_building_info', methods=['GET'])
@@ -251,10 +323,31 @@ def advanced_search():
         cursor = conn.cursor()
         cursor.execute(query, tuple(params))
         units = cursor.fetchall()
+        new_units = []
+        for unit in units:
+            avg_price_query = '''
+                SELECT AVG(MonthlyRent) AS avg_rent 
+                FROM ApartmentUnit 
+                WHERE SquareFootage BETWEEN 0.9 * %s AND 1.1 * %s 
+                AND UnitRentID IN (
+                    SELECT AU.UnitRentID
+                    FROM ApartmentUnit AU
+                    INNER JOIN ApartmentBuilding AB ON AU.CompanyName = AB.CompanyName AND AU.BuildingName = AB.BuildingName
+                    WHERE AB.CompanyName = %s
+                        AND AB.BuildingName = %s
+                );
+            '''
+            # Convert unit[5] (SquareFootage) to float or decimal if necessary
+            avg_price_params = (float(unit[5]), float(unit[5]), unit[1], unit[2])  # Assuming unit[1] is CompanyName, unit[2] is BuildingName
+            cursor.execute(avg_price_query, avg_price_params)
+            avg_rent = cursor.fetchone()[0]  # Get the average rent
+            unit = unit + (math.ceil(avg_rent),)  # Add the average rent to the unit tuple
+            new_units.append(unit)
+
         cursor.close()
-        if not units:
+        if not new_units:
             flash('No matching apartment units found. Please modify your search criteria.')
-        return render_template('advanced_search.html', username=escape(session['username']), units=units)
+        return render_template('advanced_search.html', username=escape(session['username']), units=new_units)
     else:
         cursor = conn.cursor()
         query = 'SELECT * FROM Amenities'
