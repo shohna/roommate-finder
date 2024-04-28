@@ -122,9 +122,12 @@ def search_units():
             AND UnitRentID IN (
                 SELECT AU.UnitRentID
                 FROM ApartmentUnit AU
-                INNER JOIN ApartmentBuilding AB ON AU.CompanyName = AB.CompanyName AND AU.BuildingName = AB.BuildingName
-                WHERE AB.CompanyName = %s
-                    AND AB.BuildingName = %s
+                WHERE AU.City = (
+                        SELECT AddrCity
+                        FROM ApartmentBuilding
+                        WHERE CompanyName = %s
+                            AND BuildingName = %s
+                    );
             );
         '''
         # Convert unit[5] (SquareFootage) to float or decimal if necessary
@@ -189,9 +192,12 @@ def search_units_by_pet():
             AND UnitRentID IN (
                 SELECT AU.UnitRentID
                 FROM ApartmentUnit AU
-                INNER JOIN ApartmentBuilding AB ON AU.CompanyName = AB.CompanyName AND AU.BuildingName = AB.BuildingName
-                WHERE AB.CompanyName = %s
-                    AND AB.BuildingName = %s
+                WHERE AU.City = (
+                        SELECT AddrCity
+                        FROM ApartmentBuilding
+                        WHERE CompanyName = %s
+                            AND BuildingName = %s
+                    );
             );
         '''
         # Convert unit[5] (SquareFootage) to float or decimal if necessary
@@ -272,6 +278,8 @@ def edit_pet(pet_name):
         return redirect(url_for('home'))
 
     return render_template('edit_pet.html', pet_info=pet_info)
+
+
 @app.route('/estimate_rent', methods=['GET', 'POST'])
 @login_required
 def estimate_rent():
@@ -368,6 +376,37 @@ def advanced_search():
     if request.method == 'POST':
         expected_monthly_rent = request.form['expected_monthly_rent']
         amenities = request.form.getlist('amenities')
+        query = 'SELECT * FROM ApartmentUnit WHERE MonthlyRent <= %s'
+        params = [expected_monthly_rent]
+        if amenities:
+            query += ' AND UnitRentID IN (SELECT UnitRentID FROM AmenitiesIn WHERE aType IN %s)'
+            params.append(tuple(amenities))
+        cursor = conn.cursor()
+        cursor.execute(query, tuple(params))
+        units = cursor.fetchall()
+        new_units = []
+        for unit in units:
+            avg_price_query = '''
+                SELECT AVG(MonthlyRent) AS avg_rent 
+                FROM ApartmentUnit 
+                WHERE SquareFootage BETWEEN 0.9 * %s AND 1.1 * %s 
+                AND UnitRentID IN (
+                    SELECT AU.UnitRentID
+                    FROM ApartmentUnit AU
+                    WHERE AU.City = (
+                            SELECT AddrCity
+                            FROM ApartmentBuilding
+                            WHERE CompanyName = %s
+                                AND BuildingName = %s
+                        );
+            );
+            '''
+            # Convert unit[5] (SquareFootage) to float or decimal if necessary
+            avg_price_params = (float(unit[5]), float(unit[5]), unit[1], unit[2])  # Assuming unit[1] is CompanyName, unit[2] is BuildingName
+            cursor.execute(avg_price_query, avg_price_params)
+            avg_rent = cursor.fetchone()[0]  # Get the average rent
+            unit = unit + (math.ceil(avg_rent),)  # Add the average rent to the unit tuple
+            new_units.append(unit)
 
         # Storing search criteria in the session to pass to the results page
         session['search_criteria'] = {

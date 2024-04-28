@@ -59,6 +59,10 @@
             <h2>Amenities</h2>
             <p>{{ unit_info[15] }}</p>
         </div>
+        <form action="/add_to_favorites" method="POST">
+            <input type="hidden" name="unit_id" value="{{ unit_info.UnitRentID }}">
+            <button type="submit">Add to Favorites</button>
+        </form>
         <a href="{{ url_for('home') }}">Back to Home</a>
     </div>
     <h1>Unit and Building Information</h1>
