@@ -1,0 +1,133 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Search Apartment Units</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 90%;
+            margin: 20px auto;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        input[type="submit"] {
+            width: auto;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+        .section {
+            background-color: white;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .back-link {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Search Options</h1>
+        
+        <div class="section">
+            <h2>Search Apartment Units</h2>
+            <form method="GET" action="{{ url_for('search_units') }}">
+                <label>Building Name:</label>
+                <input type="text" name="building_name" required>
+                <label>Company Name:</label>
+                <input type="text" name="company_name" required>
+                <input type="submit" value="Search">
+            </form>
+        </div>
+
+        <div class="section">
+            <h2>Search by Pet Name</h2>
+            <form method="GET" action="{{ url_for('search_units_by_pet') }}">
+                <label>Pet Name:</label>
+                <input type="text" name="pet_name" required><br>
+                <input type="submit" value="Search">
+            </form>
+            {% if units %}
+                <h3>Search Results:</h3>
+                <ul>
+                    {% for unit in units %}
+                        <li>Unit ID: {{ unit[0] }}</li>
+                        <li>Company Name: {{ unit[1] }}</li>
+                        <li>Building Name: {{ unit[2] }}</li>
+                        <li>Unit Number: {{ unit[3] }}</li>
+                        <li>Monthly Rent: {{ unit[4] }}</li>
+                        <li>Square Footage: {{ unit[5] }}</li>
+                        <li>Available Date for Move-in: {{ unit[6] }}</li>
+                        <li>Average Rent in city for similar area: {{ unit[10] }}</li>
+                        <li>Your pet Allowed: {{ unit[7] }}</li>
+                        <li>Pet Registration Fee: {{ unit[8] }}</li>
+                        <li>Pet Monthly Fee: {{ unit[9] }}</li>
+                        <form method="POST" action="{{ url_for('add_to_favorites') }}">
+                            <input type="hidden" name="unit_id" value="{{ unit[0] }}">
+                            <input type="submit" value="Add to Favorites">
+                        </form>
+                        <form method="GET" action="{{ url_for('post_interest') }}">
+                            <input type="hidden" name="unit_id" value="{{ unit[0] }}">
+                            <input type="submit" value="Show Interest">
+                        </form>
+                        
+                        <br>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>{{ error_message }}</p>
+            {% endif %}
+        </div>
+
+
+        <div class="section">
+            <h2>Advanced Search of Apartment Units</h2>
+            <form action="{{ url_for('advanced_search') }}" method="post">
+                <label for="expected_monthly_rent">Expected Monthly Rent:</label>
+                <input type="number" id="expected_monthly_rent" name="expected_monthly_rent" required><br><br>
+                
+                <label for="amenities">Select Amenities:</label><br>
+                {% for amenity in amenities %}
+                    <input type="checkbox" id="{{ amenity[0] }}" name="amenities" value="{{ amenity[0] }}">
+                    <label for="{{ amenity[0] }}">{{ amenity[0] }}</label>
+                {% endfor %}
+                <br>
+                <input type="submit" value="Search">
+            </form>
+        </div>
+
+        <a href="{{ url_for('home') }}" class="back-link">Back to Home</a>
+    </div>
+</body>
+</html>

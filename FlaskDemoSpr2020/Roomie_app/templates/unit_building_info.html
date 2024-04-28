@@ -39,7 +39,6 @@
     </style>
 </head>
 <body>
-<<<<<<< HEAD
     <div class="info-container">
         <h1>Unit and Building Information</h1>
         <div class="unit-details">
@@ -62,7 +61,6 @@
         </div>
         <a href="{{ url_for('home') }}">Back to Home</a>
     </div>
-=======
     <h1>Unit and Building Information</h1>
     <h2>Unit Details</h2>
     <p>Unit ID: {{ unit_info[0] }}</p>
@@ -76,13 +74,12 @@
     <p>Year Built: {{ unit_info[14] }}</p>
     <h2>Amenities</h2>
     <p>{{ unit_info[15] }}</p>
+    <form method="POST" action="{{ url_for('add_to_favorites') }}">
+        <input type="hidden" name="unit_id" value="{{ unit[0] }}">
+        <input type="submit" value="Add to Favorites">
+    </form>
 
     <a href="{{ url_for('home') }}">Back to Home</a>
-    
-    <!-- <form action="/add_to_favorites" method="POST">
-        <input type="hidden" name="unit_id" value="{{ unit.UnitRentID }}">
-        <button type="submit">Add to Favorites</button>
-    </form> -->
->>>>>>> c8d16a19d9965318f017d3bcda027cc5bc901632
+
 </body>
 </html>
