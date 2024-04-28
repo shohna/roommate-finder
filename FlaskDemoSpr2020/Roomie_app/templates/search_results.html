@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Search Results</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        h1, h2, h3, h4 {
+            color: #333;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="text"],
+        input[type="number"],
+        textarea {
+            width: 100%;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+        input[type="submit"] {
+            padding: 8px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin-bottom: 10px;
+        }
+        .back-link {
+            display: block;
+            margin-top: 20px;
+            color: #007bff;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Search Results</h1>
+        <h2>Expected Monthly Rent: {{ expected_rent }}</h2>
+        <h3>Selected Amenities:</h3>
+        <ul>
+            {% for amenity in selected_amenities %}
+                <li>{{ amenity }}</li>
+            {% endfor %}
+        </ul>
+
+        <h3>Apartment Units:</h3>
+        {% if units %}
+            <ul>
+                {% for unit in units %}
+                    <li>Building: {{ unit[2] }} by {{ unit[1] }}</li>
+                    <li>Unit: {{unit[3]}}</li>
+                    <li>Square Footage: {{ unit[5] }} sq ft</li>
+                    <li>Monthly Rent: {{ unit[4] }}$</li>
+                    <li>Available Date for Move-in: {{ unit[6] }}</li>
+                    <li>Average Rent for similar area: {{ unit[7] }}$</li>
+                    <form method="POST" action="{{ url_for('add_to_favorites') }}">
+                        <input type="hidden" name="unit_id" value="{{ unit[0] }}">
+                        <input type="submit" value="Add to Favorites">
+                    </form>
+                    <form method="GET" action="{{ url_for('post_interest') }}">
+                        <input type="hidden" name="unit_id" value="{{ unit[0] }}">
+                        <input type="submit" value="Show Interest">
+                    </form>
+                    <br>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No units found matching the criteria.</p>
+        {% endif %}
+
+        <a href="{{ url_for('advanced_search') }}" class="back-link">Back to Advanced Search</a>
+        <br>
+        <a href="{{ url_for('home') }}" class="back-link">Back to Home</a>
+    </div>
+</body>
+</html>

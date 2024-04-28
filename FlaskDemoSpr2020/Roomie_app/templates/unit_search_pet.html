@@ -81,10 +81,19 @@
                 <li>Monthly Rent: {{ unit.4 }}</li>
                 <li>Square Footage: {{ unit.5 }}</li>
                 <li>Available Date for Move-in: {{ unit.6 }}</li>
-                <li>Average Rent in city for similar area: {{ unit.10 }}</li>
+                <li>Average Rent for similar area: {{ unit.10 }}</li>
                 <li>Your pet Allowed: {{ unit.7 }}</li>
                 <li>Pet Registration Fee: {{ unit.8 }}</li>
                 <li>Pet Monthly Fee: {{ unit.9 }}</li>
+                <form method="POST" action="{{ url_for('add_to_favorites') }}">
+                    <input type="hidden" name="unit_id" value="{{ unit[0] }}">
+                    <input type="submit" value="Add to Favorites">
+                </form>
+                <form method="GET" action="{{ url_for('post_interest') }}">
+                    <input type="hidden" name="unit_id" value="{{ unit[0] }}">
+                    <input type="submit" value="Show Interest">
+                </form>
+                
                 <br>
                 <form action="/add_to_favorites" method="POST" onsubmit="return addToFavorites()">
                     <input type="hidden" name="unit_id" value="{{ unit.0 }}">

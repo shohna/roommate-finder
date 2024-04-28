@@ -4,6 +4,7 @@ import bcrypt
 import hashlib
 import os
 import math
+from functools import wraps
 
 app = Flask(__name__)
 app.secret_key = 'secret'
@@ -22,27 +23,39 @@ conn = psycopg2.connect(**db_params)
 def index():
     return render_template('index.html')
 
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = escape(request.form['username'])
+        username = request.form['username']
         password = request.form['password']
-        salt = "static_salt"
+        salt = "static_salt"  # Same salt as used in registration
         salted_password = salt + password
-        hashed_password = hashlib.sha256(salted_password.encode()).hexdigest()  # Hash the salted password
-        print(hashed_password)
+        hashed_password = hashlib.sha256(salted_password.encode()).hexdigest()
+
         cursor = conn.cursor()
-        query = 'SELECT * FROM Users WHERE username = %s AND passwd = %s'
-        cursor.execute(query, (username, hashed_password))
+        cursor.execute('SELECT * FROM Users WHERE username = %s AND passwd = %s', (username, hashed_password))
         user = cursor.fetchone()
         cursor.close()
+        
         if user:
             session['username'] = username
             return redirect(url_for('home'))
         else:
-            flash('Invalid username or password')
+            flash('Wrong username or password')
+
     return render_template('login.html')
+
+
+
+# Utility function to check if user is logged in
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'username' not in session:
+            flash("Not accessible. Please log in.")
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -72,6 +85,7 @@ def register():
 
 
 @app.route('/home')
+@login_required
 def home():
     if 'username' in session:
         username = escape(session['username'])
@@ -86,6 +100,7 @@ def logout():
     return redirect(url_for('index'))
 
 @app.route('/search_units', methods=['GET'])
+@login_required
 def search_units():
     building_name = escape(request.args.get('building_name'))
     company_name = escape(request.args.get('company_name'))
@@ -121,12 +136,13 @@ def search_units():
         avg_rent = cursor.fetchone()[0]  # Get the average rent
         unit = unit + (math.ceil(avg_rent),)  # Add the average rent to the unit tuple
         new_units.append(unit)
-    print(new_units)
+    # print(new_units)
     error_message = 'No matching apartment units found. Please check your input and try again.' if not units else None
     cursor.close()
     return render_template('unit_search.html', username=escape(session['username']), units=new_units, unit_comments=unit_comments, error_message=error_message)
 
 @app.route('/add_comment', methods=['POST'])
+@login_required
 def add_comment():
     unit_rent_id = request.form['unit_rent_id']
     username = session['username']
@@ -153,6 +169,7 @@ def fetch_comments_for_unit(unit_id):
 
 
 @app.route('/search_units_by_pet', methods=['GET'])
+@login_required
 def search_units_by_pet():
     pet_name = escape(request.args.get('pet_name'))
     cursor = conn.cursor()
@@ -189,13 +206,14 @@ def search_units_by_pet():
         avg_rent = cursor.fetchone()[0]  # Get the average rent
         unit = unit + (math.ceil(avg_rent),)  # Add the average rent to the unit tuple
         new_units.append(unit)
-    print(new_units)
+    # print(new_units)
     cursor.close()
     error_message = 'No matching apartment units found. Please check your input and try again.' if not units else None
     return render_template('unit_search_pet.html', username=escape(session['username']), units=new_units, error_message=error_message)
 
 
 @app.route('/unit_building_info', methods=['GET'])
+@login_required
 def unit_building_info():
     if 'username' in session:
         unit_id = request.args.get('unit_id')
@@ -220,6 +238,7 @@ def unit_building_info():
         return redirect(url_for('login'))
 
 @app.route('/register_pet', methods=['GET', 'POST'])
+@login_required
 def register_pet():
     if request.method == 'POST':
         pet_name = escape(request.form['pet_name'])
@@ -235,6 +254,7 @@ def register_pet():
     return render_template('register_pet.html')
 
 @app.route('/edit_pet/<string:pet_name>', methods=['GET', 'POST'])
+@login_required
 def edit_pet(pet_name):
     cursor = conn.cursor()
     query = "SELECT * FROM Pets WHERE username = %s AND petname ILIKE %s"
@@ -261,6 +281,7 @@ def edit_pet(pet_name):
 
 
 @app.route('/estimate_rent', methods=['GET', 'POST'])
+@login_required
 def estimate_rent():
     if request.method == 'POST':
         zipcode = request.form['zipcode']
@@ -276,6 +297,7 @@ def estimate_rent():
 
 
 @app.route('/view_interests', methods=['GET', 'POST'])
+@login_required
 def view_interests():
     # Initialize interests outside the try-except to ensure it's always defined
     interests = []
@@ -315,10 +337,14 @@ def view_interests():
 
 
 @app.route('/post_interest', methods=['GET', 'POST'])
+@login_required
 def post_interest():
     if 'username' not in session:
         flash('Please login to post interests.')
         return redirect(url_for('login'))
+
+    # Get unit_id from the URL query if available
+    selected_unit_id = request.args.get('unit_id', None)
 
     if request.method == 'POST':
         unit_id = request.form['unit_id']
@@ -338,9 +364,14 @@ def post_interest():
     cursor.execute(query)
     units = cursor.fetchall()
     cursor.close()
-    return render_template('post_interest.html', units=units)
+    # print(selected_unit_id)
+    
+    # Render the template with units and potentially a selected unit ID
+    return render_template('post_interest.html', units=units, selected_unit_id=selected_unit_id)
+
 
 @app.route('/advanced_search', methods=['GET', 'POST'])
+@login_required
 def advanced_search():
     if request.method == 'POST':
         expected_monthly_rent = request.form['expected_monthly_rent']
@@ -377,20 +408,86 @@ def advanced_search():
             unit = unit + (math.ceil(avg_rent),)  # Add the average rent to the unit tuple
             new_units.append(unit)
 
-        cursor.close()
-        if not new_units:
-            flash('No matching apartment units found. Please modify your search criteria.')
-        return render_template('advanced_search.html', username=escape(session['username']), units=new_units)
+        # Storing search criteria in the session to pass to the results page
+        session['search_criteria'] = {
+            'expected_monthly_rent': expected_monthly_rent,
+            'amenities': amenities
+        }
+
+        return redirect(url_for('search_results'))  # Redirect to a new route that will handle the display
+
     else:
-        cursor = conn.cursor()
-        query = 'SELECT * FROM Amenities'
-        cursor.execute(query)
-        amenities = cursor.fetchall()
-        cursor.close()
-        return render_template('advanced_search.html', amenities=amenities)
+        return render_template('advanced_search.html', amenities=fetch_amenities())
+
+@app.route('/search_results')
+@login_required
+def search_results():
+    # Retrieve search criteria from session
+    search_criteria = session.get('search_criteria', {})
+    expected_monthly_rent = search_criteria.get('expected_monthly_rent', 0)
+    amenities = search_criteria.get('amenities', [])
+
+    base_query = '''
+        SELECT AU.UnitRentID, AU.CompanyName, AU.BuildingName, AU.unitNumber, AU.MonthlyRent, AU.SquareFootage, AU.AvailableDateForMoveIn
+        FROM ApartmentUnit AU
+        WHERE AU.MonthlyRent <= %s
+    '''
+    params = [expected_monthly_rent]
+    if amenities:
+        base_query += ' AND AU.UnitRentID IN (SELECT UnitRentID FROM AmenitiesIn WHERE aType IN %s)'
+        params.append(tuple(amenities))
+
+    cursor = conn.cursor()
+    cursor.execute(base_query, tuple(params))
+    units = cursor.fetchall()
+
+    new_units = []
+    for unit in units:
+        avg_price_query = '''
+            SELECT AVG(MonthlyRent) AS avg_rent
+            FROM ApartmentUnit
+            WHERE SquareFootage BETWEEN 0.9 * %s AND 1.1 * %s
+            AND UnitRentID IN (
+                SELECT AU.UnitRentID
+                FROM ApartmentUnit AU
+                INNER JOIN ApartmentBuilding AB ON AU.CompanyName = AB.CompanyName AND AU.BuildingName = AB.BuildingName
+                WHERE AB.CompanyName = %s
+                    AND AB.BuildingName = %s
+            );
+        '''
+        avg_price_params = (float(unit[5]), float(unit[5]), unit[1], unit[2])
+        cursor.execute(avg_price_query, avg_price_params)
+        avg_result = cursor.fetchone()  # Fetch result once
+        avg_rent = avg_result[0] if avg_result else "N/A"  # Check the result here
+        unit = unit + (math.ceil(avg_rent) if avg_rent != "N/A" else "N/A",)
+        new_units.append(unit)
+
+    cursor.close()
+    return render_template('search_results.html', units=new_units, selected_amenities=amenities, expected_rent=expected_monthly_rent)
+
+def fetch_amenities():
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM Amenities')
+    amenities = cursor.fetchall()
+    cursor.close()
+    return amenities
+
+
+
+@app.route('/search')
+@login_required
+def search():
+    cursor = conn.cursor()
+    query = 'SELECT * FROM Amenities'
+    cursor.execute(query)
+    amenities = cursor.fetchall()
+    cursor.close()
+    return render_template('search.html', amenities=amenities)
+
     
-    
+ 
 @app.route('/search_interest', methods=['GET', 'POST'])
+@login_required
 def search_interest():
     if request.method == 'POST':
         move_in_date = request.form['move_in_date']
@@ -430,28 +527,33 @@ def calculate_average_rent(zipcode):
     
     return result[0] if result else None
 
+
 @app.route('/add_to_favorites', methods=['POST'])
+@login_required
 def add_to_favorites():
-    if 'username' in session:
-        username = session['username']
-        unit_id = request.form['unit_id']
-        cursor = conn.cursor()
-        # Check if the unit is already in favorites
-        cursor.execute('SELECT * FROM Favorites WHERE username = %s AND UnitRentID = %s', (username, unit_id))
-        if not cursor.fetchone():
-            # Add the unit to favorites
-            cursor.execute('INSERT INTO Favorites (username, UnitRentID) VALUES (%s, %s)', (username, unit_id))
-            conn.commit()
-            flash('Unit added to favorites.')
-        else:
-            flash('Unit already in favorites.')
-        cursor.close()
-        return redirect(url_for('home'))
-    else:
+    if 'username' not in session:
+        flash('Please log in to add favorites.')
         return redirect(url_for('login'))
+
+    username = session['username']
+    unit_id = request.form['unit_id']
+    cursor = conn.cursor()
+    # Check if the unit is already in favorites
+    cursor.execute('SELECT * FROM Favorites WHERE username = %s AND UnitRentID = %s', (username, unit_id))
+    if cursor.fetchone():
+        flash('Unit already in favorites.')
+    else:
+        # Add the unit to favorites
+        cursor.execute('INSERT INTO Favorites (username, UnitRentID) VALUES (%s, %s)', (username, unit_id))
+        conn.commit()
+        flash('Unit added to favorites.')
+    cursor.close()
+    return redirect(url_for('favorites'))
+
 
 # Route for displaying favorite units
 @app.route('/favorites')
+@login_required
 def favorites():
     if 'username' in session:
         username = session['username']

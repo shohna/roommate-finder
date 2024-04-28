@@ -65,5 +65,25 @@
         </form>
         <a href="{{ url_for('home') }}">Back to Home</a>
     </div>
+    <h1>Unit and Building Information</h1>
+    <h2>Unit Details</h2>
+    <p>Unit ID: {{ unit_info[0] }}</p>
+    <p>Monthly Rent: {{ unit_info[4] }}</p>
+    <p>Square Footage: {{ unit_info[5] }}</p>
+    <p>Available Date for Move-In: {{ unit_info[6] }}</p>
+    <h2>Building Details</h2>
+    <p>Company Name: {{ unit_info[1] }}</p>
+    <p>Building Name: {{ unit_info[2] }}</p>
+    <p>Address: {{ unit_info[9] }} {{ unit_info[10] }}, {{ unit_info[11] }}, {{ unit_info[12] }} {{ unit_info[13] }}</p>
+    <p>Year Built: {{ unit_info[14] }}</p>
+    <h2>Amenities</h2>
+    <p>{{ unit_info[15] }}</p>
+    <form method="POST" action="{{ url_for('add_to_favorites') }}">
+        <input type="hidden" name="unit_id" value="{{ unit[0] }}">
+        <input type="submit" value="Add to Favorites">
+    </form>
+
+    <a href="{{ url_for('home') }}">Back to Home</a>
+
 </body>
 </html>
