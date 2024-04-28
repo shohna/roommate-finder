@@ -107,9 +107,12 @@ def search_units():
             AND UnitRentID IN (
                 SELECT AU.UnitRentID
                 FROM ApartmentUnit AU
-                INNER JOIN ApartmentBuilding AB ON AU.CompanyName = AB.CompanyName AND AU.BuildingName = AB.BuildingName
-                WHERE AB.CompanyName = %s
-                    AND AB.BuildingName = %s
+                WHERE AU.City = (
+                        SELECT AddrCity
+                        FROM ApartmentBuilding
+                        WHERE CompanyName = %s
+                            AND BuildingName = %s
+                    );
             );
         '''
         # Convert unit[5] (SquareFootage) to float or decimal if necessary
@@ -172,9 +175,12 @@ def search_units_by_pet():
             AND UnitRentID IN (
                 SELECT AU.UnitRentID
                 FROM ApartmentUnit AU
-                INNER JOIN ApartmentBuilding AB ON AU.CompanyName = AB.CompanyName AND AU.BuildingName = AB.BuildingName
-                WHERE AB.CompanyName = %s
-                    AND AB.BuildingName = %s
+                WHERE AU.City = (
+                        SELECT AddrCity
+                        FROM ApartmentBuilding
+                        WHERE CompanyName = %s
+                            AND BuildingName = %s
+                    );
             );
         '''
         # Convert unit[5] (SquareFootage) to float or decimal if necessary
@@ -252,6 +258,8 @@ def edit_pet(pet_name):
         return redirect(url_for('home'))
 
     return render_template('edit_pet.html', pet_info=pet_info)
+
+
 @app.route('/estimate_rent', methods=['GET', 'POST'])
 def estimate_rent():
     if request.method == 'POST':
@@ -354,10 +362,13 @@ def advanced_search():
                 AND UnitRentID IN (
                     SELECT AU.UnitRentID
                     FROM ApartmentUnit AU
-                    INNER JOIN ApartmentBuilding AB ON AU.CompanyName = AB.CompanyName AND AU.BuildingName = AB.BuildingName
-                    WHERE AB.CompanyName = %s
-                        AND AB.BuildingName = %s
-                );
+                    WHERE AU.City = (
+                            SELECT AddrCity
+                            FROM ApartmentBuilding
+                            WHERE CompanyName = %s
+                                AND BuildingName = %s
+                        );
+            );
             '''
             # Convert unit[5] (SquareFootage) to float or decimal if necessary
             avg_price_params = (float(unit[5]), float(unit[5]), unit[1], unit[2])  # Assuming unit[1] is CompanyName, unit[2] is BuildingName

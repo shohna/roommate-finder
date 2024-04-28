@@ -86,6 +86,18 @@
                 <li>Pet Registration Fee: {{ unit.8 }}</li>
                 <li>Pet Monthly Fee: {{ unit.9 }}</li>
                 <br>
+                <form action="/add_to_favorites" method="POST" onsubmit="return addToFavorites()">
+                    <input type="hidden" name="unit_id" value="{{ unit.0 }}">
+                    <button type="submit">Add to Favorites</button>
+                </form>
+
+                <script>
+                    function addToFavorites() {
+                        // Display an alert when adding to favorites
+                        alert("Unit added to favorites.");
+                        return true; // Continue form submission
+                    }
+                </script>
             {% endfor %}
         </ul>
     {% else %}
