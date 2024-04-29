@@ -1,10 +1,11 @@
-from flask import Flask, render_template, request, session, redirect, url_for, flash, escape
+from flask import Flask, render_template, request, session, redirect, url_for, flash
 import psycopg2
 import bcrypt
 import hashlib
 import os
 import math
 from functools import wraps
+from markupsafe import escape
 
 app = Flask(__name__)
 app.secret_key = 'secret'
@@ -285,11 +286,13 @@ def edit_pet(pet_name):
 def estimate_rent():
     if request.method == 'POST':
         zipcode = request.form['zipcode']
-        # num_rooms = request.form['num_rooms']
+        num_rooms = request.form['num_rooms']
         
         # Calculate average monthly rent based on user input
-        average_rent = calculate_average_rent(zipcode)
-        
+        average_rent = calculate_average_rent(zipcode, num_rooms)
+        if average_rent is None:
+            flash('No available units satisfy the given criteria.')
+            return render_template('rent_estimate.html')        
         # Pass the calculated average rent to the template for rendering
         return render_template('rent_estimate.html', average_rent=round(average_rent, 2))
     
@@ -503,13 +506,13 @@ def search_interest():
                 """
         cursor.execute(query, (move_in_date, roommate_count))
         interests = cursor.fetchall()
-            
+        print(interests)
         # Pass the fetched interests to the HTML template for rendering
         return render_template('search_interest.html', interests=interests)
     
     return render_template('search_interest.html')
 
-def calculate_average_rent(zipcode):
+def calculate_average_rent(zipcode, num_rooms):
     cursor = conn.cursor()
     
     # SQL query to calculate average monthly rent based on zipcode and number of rooms
@@ -518,9 +521,9 @@ def calculate_average_rent(zipcode):
             FROM ApartmentUnit AS AU
             JOIN ApartmentBuilding AS AB 
             ON AU.CompanyName = AB.CompanyName AND AU.BuildingName = AB.BuildingName
-            WHERE AB.AddrZipCode = %s
+            WHERE AB.AddrZipCode = %s AND AU.room = %s
             """
-    cursor.execute(query, (zipcode,))    
+    cursor.execute(query, (zipcode, num_rooms))    
     result = cursor.fetchone()
     
     cursor.close()
