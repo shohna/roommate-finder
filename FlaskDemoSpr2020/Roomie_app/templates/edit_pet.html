@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 0;
+            margin: 0 20px; /* Added margin to the left and right sides */
             padding: 0;
             background-color: #f4f4f4;
         }
@@ -44,14 +44,20 @@
         input[type="submit"]:hover {
             background-color: #0056b3;
         }
-        a {
-            display: inline-block;
+        .back-button { /* Added styling for the back button */
+            display: block;
             margin-top: 20px;
-            color: #007bff;
+            padding: 8px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
             text-decoration: none;
+            text-align: center;
         }
-        a:hover {
-            text-decoration: underline;
+        .back-button:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
@@ -67,7 +73,7 @@
         <input type="submit" value="Update Pet">
     </form>
 
-    <a href="{{ url_for('home') }}">Back to Home</a>
+    <a href="{{ url_for('home') }}" class="back-button">Back to Home</a>
     
 </body>
 </html>

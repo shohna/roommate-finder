@@ -87,6 +87,11 @@
                         <input type="hidden" name="unit_id" value="{{ unit[0] }}">
                         <input type="submit" value="Show Interest">
                     </form>
+                    <!-- Add the View Interests button -->
+                    <form method="GET" action="/search_interest">
+                        <input type="hidden" name="unit_number" value="{{ unit[3] }}">
+                        <input type="submit" value="View Interests">
+                    </form>
                     <br>
                 {% endfor %}
             </ul>

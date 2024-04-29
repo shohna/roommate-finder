@@ -4,26 +4,70 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unit and Building Information</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0 20px; /* Added margin to left and right sides */
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        h1, h2 {
+            color: #333;
+        }
+
+        div {
+            margin-bottom: 20px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        a {
+            display: inline-block;
+            padding: 8px 20px; /* Added padding to the link */
+            margin-top: 10px;
+            background-color: #007bff;
+            color: #fff;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+
+        a:hover {
+            background-color: #0056b3;
+        }
+
+        button {
+            display: inline-block;
+            padding: 8px 20px; /* Added padding to the button */
+            margin-top: 10px;
+            background-color: #dc3545; /* Changed button color to red */
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none; /* Removed underline */
+        }
+
+        button:hover {
+            background-color: #c82333; /* Darker red on hover */
+        }
+    </style>
 </head>
 <body>
     <h1>Favorites</h1>
     {% for unit in favorite_units %}
     <div>
-       
         <h2>Unit Details</h2>
         <p>Unit ID: {{ unit[0] }}</p>
-        <p>Monthly Rent: {{ unit[4] }}</p>
-        <p>Square Footage: {{ unit[5] }}</p>
-        <p>Available Date for Move-In: {{ unit[6] }}</p>
-        <h2>Building Details</h2>
-        <p>Company Name: {{ unit[1] }}</p>
         <p>Building Name: {{ unit[2] }}</p>
-        <p>Address: {{ unit[9] }} {{ unit[10] }}, {{ unit[11] }}, {{ unit[12] }} {{ unit[13] }}</p>
-        <p>Year Built: {{ unit[14] }}</p>
-        <h2>Amenities</h2>
-        <p>{{ unit[15] }}</p>
-
+        <p>Monthly Rent: {{ unit[4] }}</p>
+        <!-- Add a button to view detailed unit information -->
+        <a href="{{ url_for('unit_building_info', unit_id=unit[0]) }}">View Unit Details</a>
+        <hr> <!-- Add a horizontal line for separation -->
     </div>
     {% endfor %}
+    <button onclick="window.location.href='{{ url_for('home') }}'">Back to Home</button>
 </body>
 </html>

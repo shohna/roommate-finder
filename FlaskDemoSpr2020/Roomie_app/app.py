@@ -6,6 +6,7 @@ import os
 import math
 from functools import wraps
 from markupsafe import escape
+import logging
 
 app = Flask(__name__)
 app.secret_key = 'secret'
@@ -18,11 +19,17 @@ db_params = {
 }
 conn = psycopg2.connect(**db_params)
 
+def is_user_logged_in():
+    print(session.get('username'))
+    return session.get('username')
 # Routes
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    if is_user_logged_in():
+        return redirect(url_for('home'))
+    else:
+        return render_template('index.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -117,27 +124,29 @@ def search_units():
     new_units = []
     for unit in units:
         avg_price_query = '''
-            SELECT AVG(MonthlyRent) AS avg_rent 
-            FROM ApartmentUnit 
-            WHERE SquareFootage BETWEEN 0.9 * %s AND 1.1 * %s 
-            AND UnitRentID IN (
-                SELECT AU.UnitRentID
-                FROM ApartmentUnit AU
-                WHERE AU.City = (
+                SELECT AVG(MonthlyRent) AS avg_rent
+                FROM ApartmentUnit AS AU
+                WHERE SquareFootage BETWEEN 0.9 * %s AND 1.1 * %s 
+                AND UnitRentID IN (
+                    SELECT AU.UnitRentID
+                    FROM ApartmentUnit AU
+                    JOIN ApartmentBuilding AB ON AU.CompanyName = AB.CompanyName AND AU.BuildingName = AB.BuildingName
+                    WHERE AB.AddrCity = (
                         SELECT AddrCity
                         FROM ApartmentBuilding
                         WHERE CompanyName = %s
-                            AND BuildingName = %s
-                    );
-            );
+                        AND BuildingName = %s
+                    )
+                )
         '''
         # Convert unit[5] (SquareFootage) to float or decimal if necessary
         avg_price_params = (float(unit[5]), float(unit[5]), unit[1], unit[2])  # Assuming unit[1] is CompanyName, unit[2] is BuildingName
         cursor.execute(avg_price_query, avg_price_params)
         avg_rent = cursor.fetchone()[0]  # Get the average rent
+        print(avg_rent)
         unit = unit + (math.ceil(avg_rent),)  # Add the average rent to the unit tuple
         new_units.append(unit)
-    # print(new_units)
+    print(new_units)
     error_message = 'No matching apartment units found. Please check your input and try again.' if not units else None
     cursor.close()
     return render_template('unit_search.html', username=escape(session['username']), units=new_units, unit_comments=unit_comments, error_message=error_message)
@@ -187,19 +196,20 @@ def search_units_by_pet():
     new_units = []
     for unit in units:
         avg_price_query = '''
-            SELECT AVG(MonthlyRent) AS avg_rent 
-            FROM ApartmentUnit 
-            WHERE SquareFootage BETWEEN 0.9 * %s AND 1.1 * %s 
-            AND UnitRentID IN (
-                SELECT AU.UnitRentID
-                FROM ApartmentUnit AU
-                WHERE AU.City = (
+                SELECT AVG(MonthlyRent) AS avg_rent
+                FROM ApartmentUnit AS AU
+                WHERE SquareFootage BETWEEN 0.9 * %s AND 1.1 * %s 
+                AND UnitRentID IN (
+                    SELECT AU.UnitRentID
+                    FROM ApartmentUnit AU
+                    JOIN ApartmentBuilding AB ON AU.CompanyName = AB.CompanyName AND AU.BuildingName = AB.BuildingName
+                    WHERE AB.AddrCity = (
                         SELECT AddrCity
                         FROM ApartmentBuilding
                         WHERE CompanyName = %s
-                            AND BuildingName = %s
-                    );
-            );
+                        AND BuildingName = %s
+                    )
+                )
         '''
         # Convert unit[5] (SquareFootage) to float or decimal if necessary
         avg_price_params = (float(unit[5]), float(unit[5]), unit[1], unit[2])  # Assuming unit[1] is CompanyName, unit[2] is BuildingName
@@ -207,7 +217,7 @@ def search_units_by_pet():
         avg_rent = cursor.fetchone()[0]  # Get the average rent
         unit = unit + (math.ceil(avg_rent),)  # Add the average rent to the unit tuple
         new_units.append(unit)
-    # print(new_units)
+    print(new_units)
     cursor.close()
     error_message = 'No matching apartment units found. Please check your input and try again.' if not units else None
     return render_template('unit_search_pet.html', username=escape(session['username']), units=new_units, error_message=error_message)
@@ -299,44 +309,16 @@ def estimate_rent():
     return render_template('rent_estimate.html')
 
 
-@app.route('/view_interests', methods=['GET', 'POST'])
-@login_required
-def view_interests():
-    # Initialize interests outside the try-except to ensure it's always defined
-    interests = []
+# @app.route('/view_interests', methods=['GET', 'POST'])
+# @login_required
+# def view_interests():
+#     # Initialize interests outside the try-except to ensure it's always defined
+#     interests = []
 
-    # Fetch all units to populate the form dropdown
-    unit_numbers = []
-    try:
-        cursor = conn.cursor()
+#     # Fetch all units to populate the form dropdown
+#     unit_numbers = []
+#     try:
         
-        # Fetch units always needed for the form dropdown
-        # cursor.execute('SELECT DISTINCT unitNumber FROM ApartmentUnit')
-        cursor.execute('SELECT unitNumber , CompanyName, BuildingName FROM ApartmentUnit')
-        unit_numbers = cursor.fetchall()
-
-        if request.method == 'POST':
-            unit_number = request.form['unit_number']  # Get unit number from the form
-
-            # Ensure to fetch interests filtered by the given unit number
-            query = '''
-                SELECT I.username, U.username, I.RoommateCnt, I.MoveInDate
-                FROM Interests I
-                JOIN Users U ON I.username = U.username
-                JOIN ApartmentUnit AU ON I.UnitRentID = AU.UnitRentID
-                WHERE AU.unitNumber = %s
-            '''
-            cursor.execute(query, (unit_number,))
-            interests = cursor.fetchall()  # Only fetch results after executing the query
-
-        cursor.close()  # Close cursor after all operations
-
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        # Optionally handle error, e.g., by logging or displaying an error message
-        flash("An error occurred while fetching data.")
-
-    return render_template('view_interests.html', interests=interests, unit_numbers=unit_numbers)
 
 
 @app.route('/post_interest', methods=['GET', 'POST'])
@@ -359,7 +341,7 @@ def post_interest():
         conn.commit()
         cursor.close()
         flash('Interest posted successfully.')
-        return redirect(url_for('view_interests'))
+        return redirect(url_for('search_interest'))
     
     # Fetch available units to select from
     cursor = conn.cursor()
@@ -390,19 +372,20 @@ def advanced_search():
         new_units = []
         for unit in units:
             avg_price_query = '''
-                SELECT AVG(MonthlyRent) AS avg_rent 
-                FROM ApartmentUnit 
+                SELECT AVG(MonthlyRent) AS avg_rent
+                FROM ApartmentUnit AS AU
                 WHERE SquareFootage BETWEEN 0.9 * %s AND 1.1 * %s 
                 AND UnitRentID IN (
                     SELECT AU.UnitRentID
                     FROM ApartmentUnit AU
-                    WHERE AU.City = (
-                            SELECT AddrCity
-                            FROM ApartmentBuilding
-                            WHERE CompanyName = %s
-                                AND BuildingName = %s
-                        );
-            );
+                    JOIN ApartmentBuilding AB ON AU.CompanyName = AB.CompanyName AND AU.BuildingName = AB.BuildingName
+                    WHERE AB.AddrCity = (
+                        SELECT AddrCity
+                        FROM ApartmentBuilding
+                        WHERE CompanyName = %s
+                        AND BuildingName = %s
+                    )
+                );
             '''
             # Convert unit[5] (SquareFootage) to float or decimal if necessary
             avg_price_params = (float(unit[5]), float(unit[5]), unit[1], unit[2])  # Assuming unit[1] is CompanyName, unit[2] is BuildingName
@@ -492,25 +475,58 @@ def search():
 @app.route('/search_interest', methods=['GET', 'POST'])
 @login_required
 def search_interest():
-    if request.method == 'POST':
-        move_in_date = request.form['move_in_date']
-        roommate_count = request.form['roommate_count']
+    try:
         cursor = conn.cursor()
+        cursor.execute('SELECT unitNumber, CompanyName, BuildingName FROM ApartmentUnit')
+        unit_numbers = cursor.fetchall()
 
-        # SQL query to fetch interests based on move-in date and roommate count
-        query = """
-                SELECT I.username, I.UnitRentID, U.first_name, U.last_name, U.DOB, U.gender, U.email, U.Phone
-                FROM Interests AS I
-                JOIN Users AS U ON I.username = U.username
-                WHERE I.MoveInDate = %s AND I.RoommateCnt = %s
-                """
-        cursor.execute(query, (move_in_date, roommate_count))
-        interests = cursor.fetchall()
-        print(interests)
-        # Pass the fetched interests to the HTML template for rendering
-        return render_template('search_interest.html', interests=interests)
-    
-    return render_template('search_interest.html')
+        interests = []  # Initialize interests list
+
+        if request.method == 'POST':
+            unit_number = request.form.get('unit_number')
+            if unit_number:
+                query = '''
+                    SELECT I.username, U.first_name, U.last_name, I.RoommateCnt, I.MoveInDate
+                    FROM Interests I
+                    JOIN Users U ON I.username = U.username
+                    JOIN ApartmentUnit AU ON I.UnitRentID = AU.UnitRentID
+                    WHERE AU.unitNumber = %s
+                '''
+                cursor.execute(query, (unit_number,))
+                interests = cursor.fetchall()
+
+            move_in_date = request.form.get('move_in_date')
+            roommate_count = request.form.get('roommate_count')
+            if move_in_date and roommate_count:
+                query = """
+                        SELECT I.username, U.first_name, U.last_name, U.DOB, U.gender, U.email, U.Phone
+                        FROM Interests AS I
+                        JOIN Users AS U ON I.username = U.username
+                        WHERE I.MoveInDate = %s AND I.RoommateCnt = %s
+                        """
+                cursor.execute(query, (move_in_date, roommate_count))
+                interests = cursor.fetchall()
+
+        elif request.method == 'GET':  # Handle GET request for viewing interests
+            unit_number = request.args.get('unit_number')
+            if unit_number:
+                query = '''
+                    SELECT I.username, U.first_name, U.last_name, I.RoommateCnt, I.MoveInDate
+                    FROM Interests I
+                    JOIN Users U ON I.username = U.username
+                    JOIN ApartmentUnit AU ON I.UnitRentID = AU.UnitRentID
+                    WHERE AU.unitNumber = %s
+                '''
+                cursor.execute(query, (unit_number,))
+                interests = cursor.fetchall()
+
+        return render_template('search_interest.html',unit_number=unit_number, interests=interests, unit_numbers=unit_numbers)
+    except Exception as e:
+        logging.error(f"Error in search_interest route: {e}")
+        return "An error occurred. Please try again later.", 500  # Return an error response
+
+
+
 
 def calculate_average_rent(zipcode, num_rooms):
     cursor = conn.cursor()

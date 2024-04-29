@@ -5,7 +5,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 0;
+            margin: 0 20px; /* Added margin to left and right sides */
             padding: 0;
             background-color: #f4f4f4;
         }
@@ -15,14 +15,17 @@
         }
         form {
             margin-bottom: 20px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
         }
         label {
             display: block;
             margin-bottom: 5px;
         }
         input[type="text"],
-        input[type="number"],
-        textarea {
+        input[type="submit"] {
             width: 100%;
             padding: 8px;
             margin-bottom: 10px;
@@ -31,11 +34,9 @@
             box-sizing: border-box;
         }
         input[type="submit"] {
-            padding: 8px 20px;
             background-color: #007bff;
             color: #fff;
             border: none;
-            border-radius: 5px;
             cursor: pointer;
         }
         input[type="submit"]:hover {
@@ -47,15 +48,25 @@
         }
         li {
             margin-bottom: 10px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
         }
         .back-link {
             display: inline-block;
             margin-top: 20px;
-            color: #007bff;
+            margin-bottom: 20px; /* Added margin at the bottom */
+            padding: 10px 20px; /* Added padding to the button */
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
             text-decoration: none;
+            cursor: pointer;
         }
         .back-link:hover {
-            text-decoration: underline;
+            background-color: #0056b3;
         }
     </style>
 </head>
@@ -74,45 +85,33 @@
         <h2>Search Results:</h2>
         <ul>
             {% for unit in units %}
-                <li>Unit ID: {{ unit.0 }}</li>
-                <li>Company Name: {{ unit.1 }}</li>
-                <li>Building Name: {{ unit.2 }}</li>
-                <li>Unit Number: {{ unit.3 }}</li>
-                <li>Monthly Rent: {{ unit.4 }}</li>
-                <li>Square Footage: {{ unit.5 }}</li>
-                <li>Available Date for Move-in: {{ unit.6 }}</li>
-                <li>Average Rent for similar area: {{ unit.10 }}</li>
-                <li>Your pet Allowed: {{ unit.7 }}</li>
-                <li>Pet Registration Fee: {{ unit.8 }}</li>
-                <li>Pet Monthly Fee: {{ unit.9 }}</li>
-                <form method="POST" action="{{ url_for('add_to_favorites') }}">
-                    <input type="hidden" name="unit_id" value="{{ unit[0] }}">
-                    <input type="submit" value="Add to Favorites">
-                </form>
-                <form method="GET" action="{{ url_for('post_interest') }}">
-                    <input type="hidden" name="unit_id" value="{{ unit[0] }}">
-                    <input type="submit" value="Show Interest">
-                </form>
-                
-                <br>
-                <form action="/add_to_favorites" method="POST" onsubmit="return addToFavorites()">
-                    <input type="hidden" name="unit_id" value="{{ unit.0 }}">
-                    <button type="submit">Add to Favorites</button>
-                </form>
-
-                <script>
-                    function addToFavorites() {
-                        // Display an alert when adding to favorites
-                        alert("Unit added to favorites.");
-                        return true; // Continue form submission
-                    }
-                </script>
+                <li>
+                    <strong>Unit ID:</strong> {{ unit.0 }}<br>
+                    <strong>Company Name:</strong> {{ unit.1 }}<br>
+                    <strong>Building Name:</strong> {{ unit.2 }}<br>
+                    <strong>Unit Number:</strong> {{ unit.3 }}<br>
+                    <strong>Monthly Rent:</strong> {{ unit.4 }}<br>
+                    <strong>Square Footage:</strong> {{ unit.5 }}<br>
+                    <strong>Available Date for Move-in:</strong> {{ unit.6 }}<br>
+                    <strong>Average Rent for similar area:</strong> {{ unit.10 }}<br>
+                    <strong>Your pet Allowed:</strong> {{ unit.7 }}<br>
+                    <strong>Pet Registration Fee:</strong> {{ unit.8 }}<br>
+                    <strong>Pet Monthly Fee:</strong> {{ unit.9 }}<br>
+                    <form method="POST" action="{{ url_for('add_to_favorites') }}">
+                        <input type="hidden" name="unit_id" value="{{ unit[0] }}">
+                        <input type="submit" value="Add to Favorites">
+                    </form>
+                    <form method="GET" action="{{ url_for('post_interest') }}">
+                        <input type="hidden" name="unit_id" value="{{ unit[0] }}">
+                        <input type="submit" value="Show Interest">
+                    </form>
+                </li>
             {% endfor %}
         </ul>
     {% else %}
         <p>{{ error_message }}</p>
     {% endif %}
 
-    <a href="{{ url_for('home') }}">Back to Home</a>
+    <button class="back-link" onclick="window.location.href='{{ url_for('home') }}'">Back to Home</button>
 </body>
 </html>

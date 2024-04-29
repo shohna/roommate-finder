@@ -7,11 +7,15 @@
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
+            background-color: #f4f4f4;
         }
         .container {
             max-width: 800px;
             margin: 20px auto;
-            padding: 0 20px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
         }
         h1, h2, h3, h4 {
             color: #333;
@@ -25,13 +29,16 @@
         }
         input[type="text"],
         input[type="number"],
-        textarea {
+        textarea,
+        input[type="submit"] {
             width: 100%;
-            padding: 5px;
+            padding: 8px;
             margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
         }
         input[type="submit"] {
-            padding: 8px 20px;
             background-color: #007bff;
             color: #fff;
             border: none;
@@ -45,15 +52,19 @@
             padding: 0;
         }
         li {
-            margin-bottom: 10px;
+            margin-bottom: 20px; /* Increased margin for better separation */
+            border: 1px solid #ccc; /* Added border for each unit */
+            padding: 15px; /* Added padding for better spacing */
+            border-radius: 5px;
         }
         .comment-section {
             margin-top: 20px;
         }
         .comment {
+            margin-bottom: 10px;
             border: 1px solid #ccc;
             padding: 10px;
-            margin-bottom: 10px;
+            border-radius: 5px;
         }
         .comment .username {
             font-weight: bold;
@@ -67,13 +78,17 @@
             display: block;
             margin-top: 20px;
             color: #007bff;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Welcome {{ username }}</h1>
-        <a href="{{ url_for('logout') }}">Logout</a>
+        <a href="{{ url_for('logout') }}" class="back-link">Logout</a>
         
         <h2>Search Apartment Units</h2>
         <form method="GET" action="{{ url_for('search_units') }}">
@@ -95,58 +110,38 @@
         <h2>Search Results:</h2>
         <ul>
             {% for unit in units %}
-            <li>Unit ID: {{ unit[0] }}</li>
-            <li>Company Name: {{ unit[1] }}</li>
-            <li>Building Name: {{ unit[2] }}</li>
-            <li>Unit number: {{ unit[3] }}</li>
-            <li>Monthly Rent: {{ unit[4] }}</li>
-            <li>Square Footage: {{ unit[5] }}</li>
-            <li>Available Date for Move-in: {{ unit[6] }}</li>
-            <li>Average Rent for similar area: {{ unit[7] }}</li>
-            <form method="POST" action="{{ url_for('add_to_favorites') }}">
-                <input type="hidden" name="unit_id" value="{{ unit[0] }}">
-                <input type="submit" value="Add to Favorites">
-            </form>
-            <form method="GET" action="{{ url_for('post_interest') }}">
-                <input type="hidden" name="unit_id" value="{{ unit[0] }}">
-                <input type="submit" value="Show Interest">
-            </form>
-            
             <li>
-                <!-- Add form for leaving comments and ratings -->
-                <form method="POST" action="{{ url_for('add_comment') }}">
-                    <input type="hidden" name="unit_rent_id" value="{{ unit[0] }}">
-                    <label for="comment_text">Comment:</label><br>
-                    <textarea id="comment_text" name="comment_text" required></textarea><br>
-                    <label for="rating">Rating (1-5):</label>
-                    <input type="number" id="rating" name="rating" min="1" max="5" required><br>
-                    <input type="submit" value="Submit Comment">
-                </form>
+                <div style="border: 2px solid #007bff; padding: 10px; border-radius: 5px;">
+                    <p>Unit ID: {{ unit[0] }}</p>
+                    <p>Company Name: {{ unit[1] }}</p>
+                    <p>Building Name: {{ unit[2] }}</p>
+                    <p>Unit number: {{ unit[3] }}</p>
+                    <p>Monthly Rent: {{ unit[4] }}</p>
+                    <p>Square Footage: {{ unit[5] }}</p>
+                    <p>Available Date for Move-in: {{ unit[6] }}</p>
+                    <p>Average Rent for similar area: {{ unit[9] }}</p>
+                    <form method="POST" action="{{ url_for('add_to_favorites') }}">
+                        <input type="hidden" name="unit_id" value="{{ unit[0] }}">
+                        <input type="submit" value="Add to Favorites">
+                    </form>
+                    <form method="GET" action="{{ url_for('post_interest') }}">
+                        <input type="hidden" name="unit_id" value="{{ unit[0] }}">
+                        <input type="submit" value="Show Interest">
+                    </form>
+                    
+                    <div class="comment-section">
+                        <h4>Comments and Ratings:</h4>
+                        <ul>
+                            {% for comment in unit_comments[unit[0]] %}
+                            <li class="comment">
+                                <span class="username">{{ comment['username'] }}</span> - {{ comment['CommentText'] }}
+                                <span class="rating">(Rating: {{ comment['Rating'] }})</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
             </li>
-            <!-- Display existing comments and ratings -->
-            <li class="comment-section">
-                <h4>Comments and Ratings:</h4>
-                <ul>
-                    {% for comment in unit_comments[unit[0]] %}
-                    <li class="comment">
-                        <span class="username">{{ comment['username'] }}</span> - {{ comment['CommentText'] }}
-                        <span class="rating">(Rating: {{ comment['Rating'] }})</span>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </li>
-            <form action="/add_to_favorites" method="POST" onsubmit="return addToFavorites()">
-                <input type="hidden" name="unit_id" value="{{ unit[0] }}">
-                <button type="submit">Add to Favorites</button>
-            </form>
-
-            <script>
-                function addToFavorites() {
-                    // Display an alert when adding to favorites
-                    alert("Unit added to favorites.");
-                    return true; // Continue form submission
-                }
-            </script>
             {% endfor %}
         </ul>
         {% else %}

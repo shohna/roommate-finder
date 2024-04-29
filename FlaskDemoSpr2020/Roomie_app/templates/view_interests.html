@@ -46,29 +46,6 @@
     </style>
 </head>
 <body>
-    <h1>View Interests</h1>
-    <form method="POST" action="{{ url_for('view_interests') }}">
-        <label for="unit_number">Choose a Unit Number:</label>
-        <select name="unit_number" id="unit_number" required>
-            <option value="blank"></option>
-            {% for unit in unit_numbers %}
-            <option value="{{ unit[0] }}">{{ unit[1] }} - {{ unit[2] }} - {{ unit[0] }}</option>
-            <!-- <option value="{{ unit[0] }}">{{ unit[0] }}</option> -->
-            {% endfor %}
-        </select>
-        <button type="submit">Show Interests</button>
-    </form>
-    <ul>
-        {% if not interests %}
-            <p class="no-interests">No interests found for this unit number</p>
-        {% endif %}
-        {% for interest in interests %}
-            <li>Username: {{ interest[1] }}</li>
-            <li>Preferred Number of roommates: {{ interest[2] }}</li>
-            <li>Available Move-in date: {{ interest[3] }}</li>
-            <br>
-        {% endfor %}
-    </ul>
     <a href="{{ url_for('home') }}">Back to Home</a>
 </body>
 </html>
