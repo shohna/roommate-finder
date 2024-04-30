@@ -513,7 +513,9 @@ def search():
 @app.route('/search_interest', methods=['GET', 'POST'])
 @login_required
 def search_interest():
-    try:
+    if request.method == 'POST':
+        move_in_date = request.form.get('move_in_date')
+        roommate_count = request.form.get('roommate_count')
         cursor = conn.cursor()
         cursor.execute('SELECT unitNumber, CompanyName, BuildingName FROM ApartmentUnit')
         unit_numbers = cursor.fetchall()
@@ -564,6 +566,42 @@ def search_interest():
         return "An error occurred. Please try again later.", 500  # Return an error response
 
 
+
+        # SQL query to fetch interests based on move-in date and/or roommate count
+        query = """
+                SELECT I.username, I.UnitRentID, U.first_name, U.last_name, U.DOB, U.gender, U.email, U.Phone
+                FROM Interests AS I
+                JOIN Users AS U ON I.username = U.username
+                """
+        
+        # Check if both move-in date and roommate count are provided
+        if move_in_date and roommate_count:
+            query += "WHERE I.MoveInDate = %s AND I.RoommateCnt = %s"
+            cursor.execute(query, (move_in_date, roommate_count))
+        
+        # Check if only move-in date is provided
+        elif move_in_date:
+            query += "WHERE I.MoveInDate = %s"
+            cursor.execute(query, (move_in_date,))
+        
+        # Check if only roommate count is provided
+        elif roommate_count:
+            query += "WHERE I.RoommateCnt = %s"
+            cursor.execute(query, (roommate_count,))
+        
+        else:
+            # If no criteria provided, return empty result
+            interests = []
+            flash('Please provide either move-in date, roommate count, or both for the search.', 'error')
+            return render_template('search_interest.html', interests=interests)
+
+        interests = cursor.fetchall()
+        cursor.close()
+        
+        # Pass the fetched interests to the HTML template for rendering
+        return render_template('search_interest.html', interests=interests)
+    
+    return render_template('search_interest.html')
 
 
 def calculate_average_rent(zipcode, num_rooms):
