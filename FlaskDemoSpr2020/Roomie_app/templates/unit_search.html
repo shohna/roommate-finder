@@ -75,13 +75,34 @@
             font-style: italic;
         }
         .back-link {
-            display: block;
-            margin-top: 20px;
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
             color: #007bff;
             text-decoration: none;
         }
         .back-link:hover {
             text-decoration: underline;
+        }
+        .error-message {
+            color: red;
+            margin-top: 10px;
+        }
+        .submit-comment {
+            display: block;
+            margin-top: 20px;
+            color: white;
+            background-color: #007bff;
+            text-decoration: none;  
+            border-radius: 5px;
+            border: none;
+            padding: 10px;
+        }
+        .comment_text {
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -111,14 +132,11 @@
         <ul>
             {% for unit in units %}
             <li>
-                <div style="border: 2px solid #007bff; padding: 10px; border-radius: 5px;">
-                    <p>Unit ID: {{ unit[0] }}</p>
-                    <p>Company Name: {{ unit[1] }}</p>
-                    <p>Building Name: {{ unit[2] }}</p>
+                <div style="border: 2px solid #007bff; padding: 10px; border-radius: 5px;margin-bottom: 10px;">
                     <p>Unit number: {{ unit[3] }}</p>
+                    <p>Building Name: {{ unit[2] }}</p>
+                    <p>Company Name: {{ unit[1] }}</p>
                     <p>Monthly Rent: {{ unit[4] }}</p>
-                    <p>Square Footage: {{ unit[5] }}</p>
-                    <p>Available Date for Move-in: {{ unit[6] }}</p>
                     <p>Average Rent for similar area: {{ unit[9] }}</p>
                     <form method="POST" action="{{ url_for('add_to_favorites') }}">
                         <input type="hidden" name="unit_id" value="{{ unit[0] }}">
@@ -128,9 +146,9 @@
                         <input type="hidden" name="unit_id" value="{{ unit[0] }}">
                         <input type="submit" value="Show Interest">
                     </form>
-                    <form method="GET" action="/search_interest">
-                        <input type="hidden" name="unit_number" value="{{ unit[3] }}">
-                        <input type="submit" value="View Interests">
+                    <form method="GET" action="/unit_building_info">
+                        <input type="hidden" name="unit_id" value="{{ unit[0] }}">
+                        <input type="submit" value="Details">
                     </form>
                     <div class="comment-section">
                         <h4>Comments and Ratings:</h4>
@@ -144,14 +162,45 @@
                         </ul>
                     </div>
                 </div>
+                <form id="commentForm-{{ unit[0] }}" method="POST" action="{{ url_for('add_comment') }}">
+                    <!-- Hidden inputs for form data -->
+                    <label for="comment_text">Comment:</label><br>
+                    <textarea id="comment_text-{{ unit[0] }}" name="comment_text" required></textarea><br>
+                    <label for="rating">Rating (1-5):</label>
+                    <input type="number" id="rating-{{ unit[0] }}" name="rating" min="1" max="5" required><br>
+                    <input type="button" class="submit-comment" value="Submit Comment" onclick="submitComment({{ unit[0] }})">
+                </form>
             </li>
             {% endfor %}
         </ul>
         {% else %}
-        <p>{{ error_message }}</p>
+        <p class="error-message">{{ error_message }}</p>
         {% endif %}
 
         <a href="{{ url_for('home') }}" class="back-link">Back to Home</a>
     </div>
 </body>
+<script>
+    function submitComment(unitId) {
+        var form = document.getElementById('commentForm-' + unitId);
+        var commentText = document.getElementById('comment_text-' + unitId).value;
+        var rating = document.getElementById('rating-' + unitId).value;
+
+        // Perform AJAX request to submit comment data
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', form.getAttribute('action'), true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.status === 200) {
+                    // Reload the page to update comments
+                    location.reload();
+                } else {
+                    console.error('Error submitting comment.');
+                }
+            }
+        };
+        xhr.send('unit_rent_id=' + unitId + '&comment_text=' + encodeURIComponent(commentText) + '&rating=' + rating);
+    }
+</script>
 </html>

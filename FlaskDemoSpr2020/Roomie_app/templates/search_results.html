@@ -1,58 +1,86 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Search Results</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
+            background-color: #f4f4f4;
         }
+
         .container {
             max-width: 800px;
             margin: 20px auto;
-            padding: 0 20px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.1);
         }
+
         h1, h2, h3, h4 {
             color: #333;
         }
+
         form {
             margin-bottom: 20px;
         }
+
         label {
             display: block;
             margin-bottom: 5px;
+            color: #555;
         }
+
         input[type="text"],
         input[type="number"],
-        textarea {
-            width: 100%;
-            padding: 5px;
-            margin-bottom: 10px;
-        }
+        textarea,
         input[type="submit"] {
-            padding: 8px 20px;
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        input[type="submit"] {
             background-color: #007bff;
             color: #fff;
             border: none;
             cursor: pointer;
+            transition: background-color 0.3s ease;
         }
+
         input[type="submit"]:hover {
             background-color: #0056b3;
         }
+
         ul {
             list-style-type: none;
             padding: 0;
         }
+
         li {
-            margin-bottom: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
         }
+
         .back-link {
-            display: block;
+            display: inline-block;
             margin-top: 20px;
             color: #007bff;
             text-decoration: none;
+            font-size: 18px;
         }
+
         .back-link:hover {
             text-decoration: underline;
         }
@@ -73,26 +101,49 @@
         {% if units %}
             <ul>
                 {% for unit in units %}
-                    <li>Building: {{ unit[2] }} by {{ unit[1] }}</li>
-                    <li>Unit: {{unit[3]}}</li>
-                    <li>Square Footage: {{ unit[5] }} sq ft</li>
-                    <li>Monthly Rent: {{ unit[4] }}$</li>
-                    <li>Available Date for Move-in: {{ unit[6] }}</li>
-                    <li>Average Rent for similar area: {{ unit[7] }}$</li>
-                    <form method="POST" action="{{ url_for('add_to_favorites') }}">
-                        <input type="hidden" name="unit_id" value="{{ unit[0] }}">
-                        <input type="submit" value="Add to Favorites">
-                    </form>
-                    <form method="GET" action="{{ url_for('post_interest') }}">
-                        <input type="hidden" name="unit_id" value="{{ unit[0] }}">
-                        <input type="submit" value="Show Interest">
-                    </form>
-                    <!-- Add the View Interests button -->
-                    <form method="GET" action="/search_interest">
-                        <input type="hidden" name="unit_number" value="{{ unit[3] }}">
-                        <input type="submit" value="View Interests">
-                    </form>
-                    <br>
+                    <li>
+                        <p>Unit number: {{ unit[3] }}</p>
+                        <p>Building Name: {{ unit[2] }}</p>
+                        <p>Company Name: {{ unit[1] }}</p>
+                        <p>Monthly Rent: {{ unit[4] }}</p>
+                        <p>Average Rent for similar area: {{ unit[9] }}</p>
+                        <form method="POST" action="{{ url_for('add_to_favorites') }}">
+                            <input type="hidden" name="unit_id" value="{{ unit[0] }}">
+                            <input type="submit" value="Add to Favorites">
+                        </form>
+                        <form method="GET" action="{{ url_for('post_interest') }}">
+                            <input type="hidden" name="unit_id" value="{{ unit[0] }}">
+                            <input type="submit" value="Show Interest">
+                        </form>
+                        <!-- Add the View Interests button -->
+                        <form method="GET" action="/search_interest">
+                            <input type="hidden" name="unit_number" value="{{ unit[3] }}">
+                            <input type="submit" value="View Interests">
+                        </form>
+                        <form action="/unit_building_info" method="GET">
+                            <input type="hidden" name="unit_id" value="{{ unit[0] }}">
+                            <input type="submit" value="Details">
+                        </form>
+                        <div class="comment-section">
+                            <h4>Comments and Ratings:</h4>
+                            <ul>
+                                {% for comment in unit_comments[unit[0]] %}
+                                <li class="comment">
+                                    <span class="username">{{ comment['username'] }}</span> - {{ comment['CommentText'] }}
+                                    <span class="rating">(Rating: {{ comment['Rating'] }})</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <form id="commentForm-{{ unit[0] }}" method="POST" action="{{ url_for('add_comment') }}">
+                            <!-- Hidden inputs for form data -->
+                            <label for="comment_text">Comment:</label><br>
+                            <textarea id="comment_text-{{ unit[0] }}" name="comment_text" required></textarea><br>
+                            <label for="rating">Rating (1-5):</label>
+                            <input type="number" id="rating-{{ unit[0] }}" name="rating" min="1" max="5" required><br>
+                            <input type="button" class="submit-comment" value="Submit Comment" onclick="submitComment({{ unit[0] }})">
+                        </form>
+                    </li>
                 {% endfor %}
             </ul>
         {% else %}
@@ -104,4 +155,27 @@
         <a href="{{ url_for('home') }}" class="back-link">Back to Home</a>
     </div>
 </body>
+<script>
+    function submitComment(unitId) {
+        var form = document.getElementById('commentForm-' + unitId);
+        var commentText = document.getElementById('comment_text-' + unitId).value;
+        var rating = document.getElementById('rating-' + unitId).value;
+
+        // Perform AJAX request to submit comment data
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', form.getAttribute('action'), true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.status === 200) {
+                    // Reload the page to update comments
+                    location.reload();
+                } else {
+                    console.error('Error submitting comment.');
+                }
+            }
+        };
+        xhr.send('unit_rent_id=' + unitId + '&comment_text=' + encodeURIComponent(commentText) + '&rating=' + rating);
+    }
+</script>
 </html>

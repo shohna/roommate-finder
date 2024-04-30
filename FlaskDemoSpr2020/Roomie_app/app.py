@@ -113,43 +113,40 @@ def search_units():
     building_name = escape(request.args.get('building_name'))
     company_name = escape(request.args.get('company_name'))
     pet_name = escape(request.args.get('pet_name'))
+    
     cursor = conn.cursor()
-    query = 'SELECT * FROM ApartmentUnit WHERE CompanyName = %s AND BuildingName = %s'
-    cursor.execute(query, (company_name, building_name))
-    units = cursor.fetchall()
-    # Fetch comments for each unit
-    unit_comments = {}
-    for unit in units:
-        unit_comments[unit[0]] = fetch_comments_for_unit(unit[0])
-    new_units = []
-    for unit in units:
-        avg_price_query = '''
-                SELECT AVG(MonthlyRent) AS avg_rent
-                FROM ApartmentUnit AS AU
-                WHERE SquareFootage BETWEEN 0.9 * %s AND 1.1 * %s 
-                AND UnitRentID IN (
-                    SELECT AU.UnitRentID
-                    FROM ApartmentUnit AU
-                    JOIN ApartmentBuilding AB ON AU.CompanyName = AB.CompanyName AND AU.BuildingName = AB.BuildingName
-                    WHERE AB.AddrCity = (
-                        SELECT AddrCity
-                        FROM ApartmentBuilding
-                        WHERE CompanyName = %s
-                        AND BuildingName = %s
-                    )
-                )
-        '''
-        # Convert unit[5] (SquareFootage) to float or decimal if necessary
-        avg_price_params = (float(unit[5]), float(unit[5]), unit[1], unit[2])  # Assuming unit[1] is CompanyName, unit[2] is BuildingName
-        cursor.execute(avg_price_query, avg_price_params)
-        avg_rent = cursor.fetchone()[0]  # Get the average rent
-        print(avg_rent)
-        unit = unit + (math.ceil(avg_rent),)  # Add the average rent to the unit tuple
-        new_units.append(unit)
-    print(new_units)
-    error_message = 'No matching apartment units found. Please check your input and try again.' if not units else None
-    cursor.close()
-    return render_template('unit_search.html', username=escape(session['username']), units=new_units, unit_comments=unit_comments, error_message=error_message)
+    error_message = None
+    units = []
+
+    if company_name and building_name:
+        query = 'SELECT * FROM ApartmentUnit WHERE CompanyName = %s AND BuildingName = %s'
+        cursor.execute(query, (company_name, building_name))
+        units = cursor.fetchall()
+    elif pet_name:
+        # Add logic to search based on pet name
+        pass
+    else:
+        error_message = 'Please provide either company name and building name or pet name.'
+
+    if units:
+        # Fetch comments for each unit
+        unit_comments = {}
+        for unit in units:
+            unit_comments[unit[0]] = fetch_comments_for_unit(unit[0])
+        
+        new_units = []
+        for unit in units:
+            # Add logic to calculate average rent
+            avg_rent = 0
+            unit = unit + (math.ceil(avg_rent),)  # Add the average rent to the unit tuple
+            new_units.append(unit)
+
+        cursor.close()
+        return render_template('unit_search.html', username=escape(session['username']), units=new_units, unit_comments=unit_comments, error_message=error_message)
+    else:
+        cursor.close()
+        return render_template('unit_search.html', username=escape(session['username']), error_message=error_message)
+
 
 @app.route('/add_comment', methods=['POST'])
 @login_required
@@ -194,7 +191,9 @@ def search_units_by_pet():
     cursor.execute(query, (session['username'], pet_name))
     units = cursor.fetchall()
     new_units = []
+    unit_comments = {}
     for unit in units:
+        unit_comments[unit[0]] = fetch_comments_for_unit(unit[0])
         avg_price_query = '''
                 SELECT AVG(MonthlyRent) AS avg_rent
                 FROM ApartmentUnit AS AU
@@ -220,7 +219,7 @@ def search_units_by_pet():
     print(new_units)
     cursor.close()
     error_message = 'No matching apartment units found. Please check your input and try again.' if not units else None
-    return render_template('unit_search_pet.html', username=escape(session['username']), units=new_units, error_message=error_message)
+    return render_template('unit_search_pet.html', username=escape(session['username']), units=new_units, error_message=error_message, unit_comments=unit_comments)
 
 
 @app.route('/unit_building_info', methods=['GET'])
@@ -249,73 +248,83 @@ def unit_building_info():
     else:
         return redirect(url_for('login'))
 
+
 @app.route('/register_pet', methods=['GET', 'POST'])
 @login_required
 def register_pet():
+    confirmation_message = ''  # Initialize an empty confirmation message
     if request.method == 'POST':
         pet_name = escape(request.form['pet_name'])
         pet_type = escape(request.form['pet_type'])
         pet_size = escape(request.form['pet_size'])
-        cursor = conn.cursor()
-        query = 'INSERT INTO Pets (username, PetName, PetType, PetSize) VALUES (%s, %s, %s, %s)'
-        cursor.execute(query, (session['username'], pet_name, pet_type, pet_size))
-        conn.commit()
-        cursor.close()
-        flash('Pet registration successful.')
-        return redirect(url_for('home'))
-    return render_template('register_pet.html')
 
-@app.route('/edit_pet/<string:pet_name>', methods=['GET', 'POST'])
+        # Check if the pet with the same name and type already exists for the user
+        cursor = conn.cursor()
+        query = 'SELECT COUNT(*) FROM Pets WHERE username = %s AND PetName = %s AND PetType = %s'
+        cursor.execute(query, (session['username'], pet_name, pet_type))
+        count = cursor.fetchone()[0]
+        cursor.close()
+
+        if count > 0:
+            confirmation_message = 'A pet with the same name and type already exists.'
+        else:
+            cursor = conn.cursor()
+            insert_query = 'INSERT INTO Pets (username, PetName, PetType, PetSize) VALUES (%s, %s, %s, %s)'
+            cursor.execute(insert_query, (session['username'], pet_name, pet_type, pet_size))
+            conn.commit()
+            cursor.close()
+            confirmation_message = 'Pet registration successful.'  # Set the confirmation message
+            return redirect(url_for('home'))
+
+    return render_template('register_pet.html', confirmation_message=confirmation_message)
+
+@app.route('/search_and_edit_pets', methods=['GET', 'POST'])
 @login_required
-def edit_pet(pet_name):
+def search_and_edit_pets():
     cursor = conn.cursor()
-    query = "SELECT * FROM Pets WHERE username = %s AND petname ILIKE %s"
-    cursor.execute(query, (session.get('username'), escape(pet_name)))
-    pet_info = cursor.fetchone()
+    query = "SELECT * FROM Pets WHERE username = %s"
+    cursor.execute(query, (session.get('username'),))
+    pets = cursor.fetchall()
     cursor.close()
-    if not pet_info:
-        flash('Pet not found or you are not authorized to edit this pet.')
-        return redirect(url_for('home'))
-
+    
     if request.method == 'POST':
-        new_pet_name = escape(request.form['pet_name'])
-        pet_type = escape(request.form['pet_type'])
-        pet_size = escape(request.form['pet_size'])
-        cursor = conn.cursor()
-        update_query = 'UPDATE Pets SET PetName = %s, PetType = %s, PetSize = %s WHERE username = %s AND petname = %s'
-        cursor.execute(update_query, (new_pet_name, pet_type, pet_size, session['username'], pet_name))
-        conn.commit()
+        selected_pet_name = escape(request.form['selected_pet'])
+        if not selected_pet_name:
+            error_message = 'Please select a pet to edit.'
+            return render_template('search_pet.html', pets=pets, error_message=error_message)
+
+        return redirect(url_for('edit_pet', pet_name=selected_pet_name))
+
+    return render_template('search_pet.html', pets=pets)
+
+
+@app.route('/edit_pet', methods=['POST'])
+@login_required
+def edit_pet():
+    pet_name = escape(request.form['pet_name'])
+    pet_type = escape(request.form['pet_type'])
+    pet_size = escape(request.form['pet_size'])
+
+    # Check if the updated pet information already exists for the user
+    cursor = conn.cursor()
+    query = 'SELECT COUNT(*) FROM Pets WHERE username = %s AND PetName = %s AND PetType = %s'
+    cursor.execute(query, (session['username'], pet_name, pet_type))
+    count = cursor.fetchone()[0]
+    query = "SELECT * FROM Pets WHERE username = %s"
+    cursor.execute(query, (session.get('username'),))
+    pets = cursor.fetchall()
+    if count > 0:
         cursor.close()
-        flash('Pet information updated.')
-        return redirect(url_for('home'))
+        error_message = 'A pet with the same name and type already exists.'
+        return render_template('search_pet.html', error_message=error_message, pets=pets)
 
-    return render_template('edit_pet.html', pet_info=pet_info) 
-
-# @app.route('/edit_pet/<string:pet_name>', methods=['GET', 'POST'])
-# @login_required
-# def edit_pet(pet_name):
-#     cursor = conn.cursor()
-#     query = "SELECT * FROM Pets WHERE username = %s AND petname ILIKE %s"
-#     cursor.execute(query, (session.get('username'), escape(pet_name)))
-#     pet_info = cursor.fetchone()
-#     cursor.close()
-#     if not pet_info:
-#         flash('Pet not found or you are not authorized to edit this pet.')
-#         return redirect(url_for('home'))
-
-#     if request.method == 'POST':
-#         new_pet_name = escape(request.form['pet_name'])
-#         pet_type = escape(request.form['pet_type'])
-#         pet_size = escape(request.form['pet_size'])
-#         cursor = conn.cursor()
-#         update_query = 'UPDATE Pets SET PetName = %s, PetType = %s, PetSize = %s WHERE username = %s AND petname = %s'
-#         cursor.execute(update_query, (new_pet_name, pet_type, pet_size, session['username'], pet_name))
-#         conn.commit()
-#         cursor.close()
-#         flash('Pet information updated.')
-#         return redirect(url_for('home'))
-
-#     return render_template('edit_pet.html', pet_info=pet_info)
+    # Update the pet information
+    update_query = 'UPDATE Pets SET PetType = %s, PetSize = %s WHERE username = %s AND petname = %s'
+    cursor.execute(update_query, (pet_type, pet_size, session['username'], pet_name))
+    conn.commit()
+    cursor.close()
+    success_message = 'Pet information updated.'
+    return render_template('search_pet.html', success_message=success_message, pets=pets)
 
 
 @app.route('/estimate_rent', methods=['GET', 'POST'])
@@ -424,7 +433,7 @@ def advanced_search():
         # Storing search criteria in the session to pass to the results page
         session['search_criteria'] = {
             'expected_monthly_rent': expected_monthly_rent,
-            'amenities': amenities
+            'amenities': amenities,
         }
 
         return redirect(url_for('search_results'))  # Redirect to a new route that will handle the display
@@ -455,7 +464,9 @@ def search_results():
     units = cursor.fetchall()
 
     new_units = []
+    unit_comments = {}
     for unit in units:
+        unit_comments[unit[0]] = fetch_comments_for_unit(unit[0])
         avg_price_query = '''
             SELECT AVG(MonthlyRent) AS avg_rent
             FROM ApartmentUnit
@@ -476,7 +487,7 @@ def search_results():
         new_units.append(unit)
 
     cursor.close()
-    return render_template('search_results.html', units=new_units, selected_amenities=amenities, expected_rent=expected_monthly_rent)
+    return render_template('search_results.html', units=new_units, selected_amenities=amenities, expected_rent=expected_monthly_rent, unit_comments=unit_comments)
 
 def fetch_amenities():
     cursor = conn.cursor()
