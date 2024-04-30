@@ -1,25 +1,114 @@
-<!-- search_interest.html -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Search Interest Results</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .left-column, .right-column {
+            flex-basis: 45%;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="date"],
+        input[type="number"],
+        select,
+        button {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 8px 20px;
+            background-color: #007bff;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .back-link:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
-    <h1>Search Interest Results</h1>
-
-    <form action="/search_interest" method="POST">
-        <label for="move_in_date">Move-in Date:</label>
-        <input type="date" id="move_in_date" name="move_in_date">
-        <br>
-        <label for="roommate_count">Roommate Count:</label>
-        <input type="number" id="roommate_count" name="roommate_count" min="0">
-        <br>
-        <button type="submit">Search</button>
-    </form>
-    
+    <div class="container">
+        <div class="left-column">
+            <h1>Search Interest Results</h1>
+            <form action="/search_interest" method="POST">
+                <label for="move_in_date">Move-in Date:</label>
+                <input type="date" id="move_in_date" name="move_in_date">
+                <br>
+                <label for="roommate_count">Roommate Count:</label>
+                <input type="number" id="roommate_count" name="roommate_count" min="0">
+                <br>
+                <button type="submit">Search</button>
+            </form>
+        </div>
+        <div class="right-column">
+            <h1>View Interests</h1>
+            <form method="POST" action="/search_interest">
+                <label for="unit_number">Choose a Unit Number:</label>
+                <select name="unit_number" id="unit_number" required>
+                    <option value="blank"></option>
+                    {% for unit in unit_numbers %}
+                    <option value="{{ unit[0] }}" {% if unit[0] == unit_number %}selected{% endif %}>
+                        {{ unit[1] }} - {{ unit[2] }} - {{ unit[0] }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <button type="submit">Show Interests</button>
+            </form>
+        </div>
+    </div>
     {% if interests %}
         <table>
             <tr>
@@ -37,14 +126,13 @@
                     <td>{{ interest[2] }}</td>
                     <td>{{ interest[3] }}</td>
                     <td>{{ interest[4] }}</td>
-                    <td>{{ interest[5] }}</td>
+                    <td>{{ 'Male' if interest[5] == 1 else 'Female' }}</td>
                     <td>{{ interest[6] }}</td>
                     <td>{{ interest[7] }}</td>
                 </tr>
             {% endfor %}
         </table>
-    {% else %}
-        <p>No interests found for the specified criteria.</p>
     {% endif %}
+    <a href="{{ url_for('home') }}" class="back-link">Back to Home</a>
 </body>
 </html>

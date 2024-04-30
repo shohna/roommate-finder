@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Advanced Search</title>
     <style>
         body {
@@ -8,6 +10,11 @@
             margin: 0;
             padding: 0;
             background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 0 20px; /* Padding added to the left and right */
         }
         h1, h2, h3, h4 {
             color: #333;
@@ -66,71 +73,71 @@
     </style>
 </head>
 <body>
-    <h1>Advanced Search of Apartment Units</h1>
-    <form action="{{ url_for('advanced_search') }}" method="post">
-        <label for="expected_monthly_rent">Expected Monthly Rent:</label>
-        <input type="number" id="expected_monthly_rent" name="expected_monthly_rent" required><br><br>
+    <div class="container">
+        <h1>Advanced Search of Apartment Units</h1>
+        <form action="{{ url_for('advanced_search') }}" method="post">
+            <label for="expected_monthly_rent">Expected Monthly Rent:</label>
+            <input type="number" id="expected_monthly_rent" name="expected_monthly_rent" required><br><br>
 
-        <label for="amenities">Select Amenities:</label><br>
-        {% for amenity in amenities %}
-            <input type="checkbox" id="{{ amenity[0] }}" name="amenities" value="{{ amenity[0] }}" {{ 'checked' if amenity[0] in selected_amenities else '' }}>
-            <label for="{{ amenity[0] }}">{{ amenity[0] }}</label>
-        {% endfor %}
-
-        <br>
-        <input type="submit" value="Search">
-    </form>
-
-    {% if selected_amenities %}
-        <h2>Selected Amenities:</h2>
-        <ul>
-            {% for amenity in selected_amenities %}
-                <li>{{ amenity }}</li>
+            <label for="amenities">Select Amenities:</label><br>
+            {% for amenity in amenities %}
+                <input type="checkbox" id="{{ amenity[0] }}" name="amenities" value="{{ amenity[0] }}" {{ 'checked' if amenity[0] in selected_amenities else '' }}>
+                <label for="{{ amenity[0] }}">{{ amenity[0] }}</label>
             {% endfor %}
-        </ul>
-    {% endif %}
+
+            <br>
+            <input type="submit" value="Search">
+        </form>
+
+        {% if selected_amenities %}
+            <h2>Selected Amenities:</h2>
+            <ul>
+                {% for amenity in selected_amenities %}
+                    <li>{{ amenity }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
 
 
-    {% if units %}
-        <h2>Search Results:</h2>
-        <ul>
-            {% for unit in units %}
-                <li>Unit ID: {{ unit[0] }}</li>
-                <li>Company name: {{ unit[1] }}</li>
-                <li>Building name: {{ unit[2] }}</li>
-                <li>Unit number: {{ unit[3] }}</li>
-                <li>Monthly Rent: {{ unit[4] }}</li>
-                <li>Square Footage: {{ unit[5] }}</li>
-                <li>Available Date for Move-in: {{ unit[6] }}</li>
-                <li>Amenities: {{ unit[8] }}</li>
-                <li>Average Rent in city for similar area: {{ unit[7] }}</li>
-                <form method="POST" action="{{ url_for('add_to_favorites') }}">
-                    <input type="hidden" name="unit_id" value="{{ unit[0] }}">
-                    <input type="submit" value="Add to Favorites">
-                </form>
-                <form method="GET" action="{{ url_for('post_interest') }}">
-                    <input type="hidden" name="unit_id" value="{{ unit[0] }}">
-                    <input type="submit" value="Show Interest">
-                </form>
-                
-                <br>
-                <form action="/add_to_favorites" method="POST" onsubmit="return addToFavorites()">
-                    <input type="hidden" name="unit_id" value="{{ unit[0] }}">
-                    <button type="submit">Add to Favorites</button>
-                </form>
+        {% if units %}
+            <h2>Search Results:</h2>
+            <ul>
+                {% for unit in units %}
+                    <li>Unit ID: {{ unit[0] }}</li>
+                    <li>Company name: {{ unit[1] }}</li>
+                    <li>Building name: {{ unit[2] }}</li>
+                    <li>Unit number: {{ unit[3] }}</li>
+                    <li>Monthly Rent: {{ unit[4] }}</li>
+                    <li>Square Footage: {{ unit[5] }}</li>
+                    <li>Available Date for Move-in: {{ unit[6] }}</li>
+                    <li>Amenities: {{ unit[8] }}</li>
+                    <li>Average Rent in city for similar area: {{ unit[7] }}</li>
+                    <form method="POST" action="{{ url_for('add_to_favorites') }}">
+                        <input type="hidden" name="unit_id" value="{{ unit[0] }}">
+                        <input type="submit" value="Add to Favorites">
+                    </form>
+                    <form method="GET" action="{{ url_for('post_interest') }}">
+                        <input type="hidden" name="unit_id" value="{{ unit[0] }}">
+                        <input type="submit" value="Show Interest">
+                    </form>
+                    <br>
+                    <form action="/add_to_favorites" method="POST" onsubmit="return addToFavorites()">
+                        <input type="hidden" name="unit_id" value="{{ unit[0] }}">
+                        <button type="submit">Add to Favorites</button>
+                    </form>
 
-                <script>
-                    function addToFavorites() {
-                        // Display an alert when adding to favorites
-                        alert("Unit added to favorites.");
-                        return true; // Continue form submission
-                    }
-                </script>
-            {% endfor %}
-        </ul>
-    {% endif %}
+                    <script>
+                        function addToFavorites() {
+                            // Display an alert when adding to favorites
+                            alert("Unit added to favorites.");
+                            return true; // Continue form submission
+                        }
+                    </script>
+                {% endfor %}
+            </ul>
+        {% endif %}
 
-    <a href="{{ url_for('home') }}" class="back-link">Back to Home</a>
-
+        <a href="{{ url_for('home') }}" class="back-link">Back to Home</a>
+    </div>
 </body>
 </html>

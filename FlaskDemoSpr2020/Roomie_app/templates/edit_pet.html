@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Pet</title>
+    <title>Pet List</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 0;
+            margin: 0 20px; /* Added margin to the left and right sides */
             padding: 0;
             background-color: #f4f4f4;
         }
@@ -15,59 +15,67 @@
             color: #333;
             margin-bottom: 20px;
         }
-        form {
-            margin-bottom: 20px;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 5px;
-            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+        ul {
+            list-style-type: none;
+            padding: 0;
         }
-        label {
-            display: block;
+        li {
             margin-bottom: 10px;
         }
-        input[type="text"],
-        input[type="submit"] {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            box-sizing: border-box;
+        .edit-form {
+            display: none; /* Initially hide the edit form */
         }
-        input[type="submit"] {
+        input[type="text"] {
+            width: 100px; /* Adjust width as needed */
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .back-button { /* Added styling for the back button */
+            display: block;
+            margin-top: 20px;
+            padding: 8px;
             background-color: #007bff;
             color: #fff;
             border: none;
+            border-radius: 5px;
             cursor: pointer;
-        }
-        input[type="submit"]:hover {
-            background-color: #0056b3;
-        }
-        a {
-            display: inline-block;
-            margin-top: 20px;
-            color: #007bff;
             text-decoration: none;
+            text-align: center;
         }
-        a:hover {
-            text-decoration: underline;
+        .back-button:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
 <body>
-    <h1>Edit Pet</h1>
-    <form method="POST" action="{{ url_for('edit_pet', pet_name=pet_info[0]) }}">
-        <label for="pet_name">Pet Name:</label>
-        <input type="text" id="pet_name" name="pet_name" value="{{ pet_info[0] }}" required><br>
-        <label for="pet_type">Pet Type:</label>
-        <input type="text" id="pet_type" name="pet_type" value="{{ pet_info[1] }}" required><br>
-        <label for="pet_size">Pet Size:</label>
-        <input type="text" id="pet_size" name="pet_size" value="{{ pet_info[2] }}" required><br>
-        <input type="submit" value="Update Pet">
-    </form>
+    <h1>Pet List</h1>
+    <ul>
+        {% for pet in pets %}
+        <li>
+            {{ pet.name }} - {{ pet.type }} - {{ pet.size }}
+            <a href="#" class="edit-link" onclick="toggleEditForm('{{ pet.name }}')">Edit</a>
+            <form id="form-{{ pet.name }}" class="edit-form" method="POST" action="{{ url_for('edit_pet', pet_name=pet.name) }}">
+                <input type="text" name="pet_name" value="{{ pet.name }}" required>
+                <input type="text" name="pet_type" value="{{ pet.type }}" required>
+                <input type="text" name="pet_size" value="{{ pet.size }}" required>
+                <input type="submit" value="Update">
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
 
-    <a href="{{ url_for('home') }}">Back to Home</a>
-    
+    <a href="{{ url_for('home') }}" class="back-button">Back to Home</a>
+
+    <script>
+        function toggleEditForm(petName) {
+            var form = document.getElementById('form-' + petName);
+            if (form.style.display === 'none') {
+                form.style.display = 'block';
+            } else {
+                form.style.display = 'none';
+            }
+        }
+    </script>
 </body>
 </html>
