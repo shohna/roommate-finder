@@ -77,6 +77,16 @@
         .back-link:hover {
             background-color: #0056b3;
         }
+        a {
+            display: block;
+            text-align: center;
+            color: #007bff;
+            text-decoration: none;
+            margin-top: 20px;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -100,7 +110,7 @@
                 <select name="unit_number" id="unit_number" required>
                     <option value="blank"></option>
                     {% for unit in unit_numbers %}
-                    <option value="{{ unit[0] }}" {% if unit[0] == unit_number %}selected{% endif %}>
+                    <option value="{{ unit[0] }}" {% if unit[0]|string == selected_unit_number|string %}selected{% endif %}>
                         {{ unit[1] }} - {{ unit[2] }} - {{ unit[0] }}
                     </option>
                     {% endfor %}
@@ -115,7 +125,8 @@
                 <th>Username</th>
                 <th>First Name</th>
                 <th>Last Name</th>
-                <th>Date of Birth</th>
+                <th>Roommates</th>
+                <th>Move-in Date</th>
                 <th>Gender</th>
                 <th>Email</th>
                 <th>Phone</th>
@@ -123,6 +134,7 @@
             {% for interest in interests %}
                 <tr>
                     <td>{{ interest[0] }}</td>
+                    <td>{{ interest[1] }}</td>
                     <td>{{ interest[2] }}</td>
                     <td>{{ interest[3] }}</td>
                     <td>{{ interest[4] }}</td>

@@ -84,12 +84,22 @@
         .back-link:hover {
             text-decoration: underline;
         }
+        a {
+            display: block;
+            text-align: center;
+            color: #007bff;
+            text-decoration: none;
+            margin-top: 20px;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Search Results</h1>
-        <h2>Expected Monthly Rent: {{ expected_rent }}</h2>
+        <h2>Results for Rent between {{ min_rent }} and {{ max_rent }}</h2>
         <h3>Selected Amenities:</h3>
         <ul>
             {% for amenity in selected_amenities %}
@@ -106,7 +116,7 @@
                         <p>Building Name: {{ unit[2] }}</p>
                         <p>Company Name: {{ unit[1] }}</p>
                         <p>Monthly Rent: {{ unit[4] }}</p>
-                        <p>Average Rent for similar area: {{ unit[9] }}</p>
+                        <p>Average Rent for similar area: {{ unit[7] }}</p>
                         <form method="POST" action="{{ url_for('add_to_favorites') }}">
                             <input type="hidden" name="unit_id" value="{{ unit[0] }}">
                             <input type="submit" value="Add to Favorites">

@@ -111,22 +111,6 @@
         <h1>Welcome {{ username }}</h1>
         <a href="{{ url_for('logout') }}" class="back-link">Logout</a>
         
-        <h2>Search Apartment Units</h2>
-        <form method="GET" action="{{ url_for('search_units') }}">
-            <label>Building Name:</label>
-            <input type="text" name="building_name" required><br>
-            <label>Company Name:</label>
-            <input type="text" name="company_name" required><br>
-            <input type="submit" value="Search">
-        </form>
-        
-        <h3>Search your Pet Name to check available apartments allowing the pet</h3>
-        <form method="GET" action="{{ url_for('search_units_by_pet') }}">
-            <label>Pet Name:</label>
-            <input type="text" name="pet_name" required><br>
-            <input type="submit" value="Search">
-        </form>
-        
         {% if units %}
         <h2>Search Results:</h2>
         <ul>
@@ -145,6 +129,10 @@
                     <form method="GET" action="{{ url_for('post_interest') }}">
                         <input type="hidden" name="unit_id" value="{{ unit[0] }}">
                         <input type="submit" value="Show Interest">
+                    </form>
+                    <form method="GET" action="/search_interest">
+                        <input type="hidden" name="unit_number" value="{{ unit[3] }}">
+                        <input type="submit" value="View Interests">
                     </form>
                     <form method="GET" action="/unit_building_info">
                         <input type="hidden" name="unit_id" value="{{ unit[0] }}">
