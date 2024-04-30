@@ -239,6 +239,7 @@ def unit_building_info():
         '''
         cursor.execute(query, (unit_id,))
         unit_info = cursor.fetchone()
+        print(unit_info)
         cursor.close()
         if unit_info:
             return render_template('unit_building_info.html', unit_info=unit_info)
@@ -288,7 +289,33 @@ def edit_pet(pet_name):
         flash('Pet information updated.')
         return redirect(url_for('home'))
 
-    return render_template('edit_pet.html', pet_info=pet_info)
+    return render_template('edit_pet.html', pet_info=pet_info) 
+
+# @app.route('/edit_pet/<string:pet_name>', methods=['GET', 'POST'])
+# @login_required
+# def edit_pet(pet_name):
+#     cursor = conn.cursor()
+#     query = "SELECT * FROM Pets WHERE username = %s AND petname ILIKE %s"
+#     cursor.execute(query, (session.get('username'), escape(pet_name)))
+#     pet_info = cursor.fetchone()
+#     cursor.close()
+#     if not pet_info:
+#         flash('Pet not found or you are not authorized to edit this pet.')
+#         return redirect(url_for('home'))
+
+#     if request.method == 'POST':
+#         new_pet_name = escape(request.form['pet_name'])
+#         pet_type = escape(request.form['pet_type'])
+#         pet_size = escape(request.form['pet_size'])
+#         cursor = conn.cursor()
+#         update_query = 'UPDATE Pets SET PetName = %s, PetType = %s, PetSize = %s WHERE username = %s AND petname = %s'
+#         cursor.execute(update_query, (new_pet_name, pet_type, pet_size, session['username'], pet_name))
+#         conn.commit()
+#         cursor.close()
+#         flash('Pet information updated.')
+#         return redirect(url_for('home'))
+
+#     return render_template('edit_pet.html', pet_info=pet_info)
 
 
 @app.route('/estimate_rent', methods=['GET', 'POST'])
