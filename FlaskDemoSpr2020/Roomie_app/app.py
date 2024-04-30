@@ -128,7 +128,7 @@ def search_units():
                         FROM ApartmentBuilding
                         WHERE CompanyName = %s
                             AND BuildingName = %s
-                    );
+                    )
             );
         '''
         # Convert unit[5] (SquareFootage) to float or decimal if necessary
@@ -493,24 +493,46 @@ def search():
 @login_required
 def search_interest():
     if request.method == 'POST':
-        move_in_date = request.form['move_in_date']
-        roommate_count = request.form['roommate_count']
+        move_in_date = request.form.get('move_in_date')
+        roommate_count = request.form.get('roommate_count')
         cursor = conn.cursor()
 
-        # SQL query to fetch interests based on move-in date and roommate count
+        # SQL query to fetch interests based on move-in date and/or roommate count
         query = """
                 SELECT I.username, I.UnitRentID, U.first_name, U.last_name, U.DOB, U.gender, U.email, U.Phone
                 FROM Interests AS I
                 JOIN Users AS U ON I.username = U.username
-                WHERE I.MoveInDate = %s AND I.RoommateCnt = %s
                 """
-        cursor.execute(query, (move_in_date, roommate_count))
+        
+        # Check if both move-in date and roommate count are provided
+        if move_in_date and roommate_count:
+            query += "WHERE I.MoveInDate = %s AND I.RoommateCnt = %s"
+            cursor.execute(query, (move_in_date, roommate_count))
+        
+        # Check if only move-in date is provided
+        elif move_in_date:
+            query += "WHERE I.MoveInDate = %s"
+            cursor.execute(query, (move_in_date,))
+        
+        # Check if only roommate count is provided
+        elif roommate_count:
+            query += "WHERE I.RoommateCnt = %s"
+            cursor.execute(query, (roommate_count,))
+        
+        else:
+            # If no criteria provided, return empty result
+            interests = []
+            flash('Please provide either move-in date, roommate count, or both for the search.', 'error')
+            return render_template('search_interest.html', interests=interests)
+
         interests = cursor.fetchall()
-        print(interests)
+        cursor.close()
+        
         # Pass the fetched interests to the HTML template for rendering
         return render_template('search_interest.html', interests=interests)
     
     return render_template('search_interest.html')
+
 
 def calculate_average_rent(zipcode, num_rooms):
     cursor = conn.cursor()
