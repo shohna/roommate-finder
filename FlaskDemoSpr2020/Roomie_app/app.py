@@ -49,7 +49,8 @@ def login():
             session['username'] = username
             return redirect(url_for('home'))
         else:
-            flash('Wrong username or password')
+            # flash('Wrong username or password')
+            pass
 
     return render_template('login.html')
 
@@ -60,7 +61,7 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'username' not in session:
-            flash("Not accessible. Please log in.")
+            # flash("Not accessible. Please log in.")
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
@@ -87,7 +88,7 @@ def register():
         cursor.execute(query, (username, hashed_password, first_name, last_name, dob, gender, email, phone))
         conn.commit()
         cursor.close()
-        flash('Registration successful. Please log in.')
+        # flash('Registration successful. Please log in.')
         return redirect(url_for('login'))
     return render_template('register.html')
 
@@ -275,7 +276,7 @@ def unit_building_info():
         if unit_info:
             return render_template('unit_building_info.html', unit_info=unit_info)
         else:
-            flash('Unit not found')
+            # flash('Unit not found')
             return redirect(url_for('home'))
     else:
         return redirect(url_for('login'))
@@ -369,7 +370,7 @@ def estimate_rent():
         # Calculate average monthly rent based on user input
         average_rent = calculate_average_rent(zipcode, num_rooms)
         if average_rent is None:
-            flash('No available units satisfy the given criteria.')
+            # flash('No available units satisfy the given criteria.')
             return render_template('rent_estimate.html')        
         # Pass the calculated average rent to the template for rendering
         return render_template('rent_estimate.html', average_rent=round(average_rent, 2))
@@ -383,7 +384,7 @@ def estimate_rent():
 @login_required
 def post_interest():
     if 'username' not in session:
-        flash('Please login to post interests.')
+        # flash('Please login to post interests.')
         return redirect(url_for('login'))
 
     # Get unit_id from the URL query if available
@@ -398,7 +399,7 @@ def post_interest():
         cursor.execute(query, (session['username'], unit_id, roommate_count, move_in_date))
         conn.commit()
         cursor.close()
-        flash('Interest posted successfully.')
+        # flash('Interest posted successfully.')
         return redirect(url_for('search_interest'))
     
     # Fetch available units to select from
@@ -584,7 +585,8 @@ def search_interest():
                 interests = cursor.fetchall()
 
         if not interests:
-            flash('No results found. Try different criteria.', 'info')
+            # flash('No results found. Try different criteria.', 'info')
+            pass
 
     cursor.close()
     print(interests)
@@ -615,7 +617,7 @@ def calculate_average_rent(zipcode, num_rooms):
 @login_required
 def add_to_favorites():
     if 'username' not in session:
-        flash('Please log in to add favorites.')
+        # flash('Please log in to add favorites.')
         return redirect(url_for('login'))
 
     username = session['username']
@@ -624,12 +626,13 @@ def add_to_favorites():
     # Check if the unit is already in favorites
     cursor.execute('SELECT * FROM Favorites WHERE username = %s AND UnitRentID = %s', (username, unit_id))
     if cursor.fetchone():
-        flash('Unit already in favorites.')
+        # flash('Unit already in favorites.')
+        pass
     else:
         # Add the unit to favorites
         cursor.execute('INSERT INTO Favorites (username, UnitRentID) VALUES (%s, %s)', (username, unit_id))
         conn.commit()
-        flash('Unit added to favorites.')
+        # flash('Unit added to favorites.')
     cursor.close()
     return redirect(url_for('favorites'))
 
