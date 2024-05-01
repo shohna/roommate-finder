@@ -20,7 +20,6 @@ db_params = {
 conn = psycopg2.connect(**db_params)
 
 def is_user_logged_in():
-    print(session.get('username'))
     return session.get('username')
 # Routes
 
@@ -169,7 +168,6 @@ def search_units():
             new_units.append(unit)
 
         cursor.close()
-        print(new_units)
         if pet_allowed:
             return render_template('unit_search_pet.html', username=escape(session['username']), units=new_units, unit_comments=unit_comments, error_message=error_message)
         else:
@@ -272,7 +270,6 @@ def unit_building_info():
         '''
         cursor.execute(query, (unit_id,))
         unit_info = cursor.fetchone()
-        print(unit_info)
         cursor.close()
         if unit_info:
             return render_template('unit_building_info.html', unit_info=unit_info)
@@ -412,7 +409,6 @@ def post_interest():
     cursor.execute(query)
     units = cursor.fetchall()
     cursor.close()
-    # print(selected_unit_id)
     
     # Render the template with units and potentially a selected unit ID
     return render_template('post_interest.html', units=units, selected_unit_id=selected_unit_id)
@@ -457,7 +453,6 @@ def advanced_search():
             avg_rent = cursor.fetchone()[0]  # Get the average rent
             unit = unit + (math.ceil(avg_rent),)  # Add the average rent to the unit tuple
             new_units.append(unit)
-            # print(unit)
 
         # Storing search criteria in the session to pass to the results page
         session['search_criteria'] = {
@@ -518,7 +513,6 @@ def search_results():
         new_units.append(unit)
 
     cursor.close()
-    print(new_units)
     return render_template('search_results.html', units=new_units, selected_amenities=amenities, min_rent=min_rent, max_rent=max_rent, unit_comments=unit_comments)
 
 def fetch_amenities():
@@ -556,9 +550,6 @@ def search_interest():
     if request.method == 'POST':
         move_in_date = request.form.get('move_in_date')
         roommate_count = request.form.get('roommate_count')
-        print(unit_number)
-        print(move_in_date)
-        print(roommate_count)
         # SQL query to fetch interests based on move-in date and/or roommate count
         if move_in_date or roommate_count or unit_number:  # Filter by move-in date and/or roommate count
             query = '''
@@ -569,55 +560,41 @@ def search_interest():
             '''
             params = []
             conditions = []
-            print("a")
             if move_in_date:
                 conditions.append("I.MoveInDate = %s")
                 params.append(move_in_date)
-                print("b")
             if roommate_count:
                 conditions.append("")
                 params.append(roommate_count)
-                print("c")
             if unit_number:
                 conditions.append("I.UnitRentID = %s")
                 params.append(unit_number)
             if conditions:
                 query += " WHERE " + " AND ".join(conditions)
-                print(query)
-                print(params)
                 cursor.execute(query, tuple(params))
                 interests = cursor.fetchall()
-                print("d")
 
         if not interests:
             # flash('No results found. Try different criteria.', 'info')
             error_message="No results found. Try different criteria."
-        print("e")
         cursor.close()
-        print(interests)
         return render_template('search_interest.html', interests=interests, unit_numbers=unit_numbers, selected_unit_number=selected_unit_number,error_message=error_message)
     elif request.method == 'GET':
         params = []
         conditions = []
-        print("get")
         query = '''
                 SELECT I.username, I.UnitRentID, U.first_name, U.last_name, I.RoommateCnt, I.MoveInDate, U.gender, U.email, U.Phone, A.unitnumber
                 FROM Interests AS I
                 JOIN Users AS U ON I.username = U.username
                 JOIN ApartmentUnit As A ON A.unitrentid = I.unitrentid
             '''
-        print(selected_unit_number)
         if selected_unit_number:
             conditions.append("A.UnitNumber = %s")
             params.append(selected_unit_number)
-            print(selected_unit_number)
         if conditions:
             query += " WHERE " + " AND ".join(conditions)
-            print(query)
-            print(params)
             cursor.execute(query, tuple(params))
             interests = cursor.fetchall()
-            print("d")
     return render_template('search_interest.html',unit_number=unit_number, interests=interests, unit_numbers=unit_numbers)
 
 
