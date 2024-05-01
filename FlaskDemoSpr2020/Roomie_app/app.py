@@ -553,7 +553,7 @@ def search_interest():
         # SQL query to fetch interests based on move-in date and/or roommate count
         if move_in_date or roommate_count or unit_number:  # Filter by move-in date and/or roommate count
             query = '''
-                SELECT I.username, I.UnitRentID, U.first_name, U.last_name, I.RoommateCnt, I.MoveInDate, U.gender, U.email, U.Phone, A.unitnumber
+                SELECT I.username, I.UnitRentID, U.first_name, U.last_name, I.RoommateCnt, I.MoveInDate, U.gender, U.email, U.Phone, A.unitnumber, A.CompanyName, A.buildingname
                 FROM Interests AS I
                 JOIN Users AS U ON I.username = U.username
                 JOIN ApartmentUnit As A ON A.unitrentid = I.unitrentid
@@ -584,7 +584,7 @@ def search_interest():
         params = []
         conditions = []
         query = '''
-                SELECT I.username, I.UnitRentID, U.first_name, U.last_name, I.RoommateCnt, I.MoveInDate, U.gender, U.email, U.Phone, A.unitnumber
+                SELECT I.username, I.UnitRentID, U.first_name, U.last_name, I.RoommateCnt, I.MoveInDate, U.gender, U.email, U.Phone, A.unitnumber, A.CompanyName, A.buildingname
                 FROM Interests AS I
                 JOIN Users AS U ON I.username = U.username
                 JOIN ApartmentUnit As A ON A.unitrentid = I.unitrentid
