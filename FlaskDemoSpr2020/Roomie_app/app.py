@@ -546,7 +546,7 @@ def search_interest():
     unit_numbers = cursor.fetchall()  # Fetch all unit numbers once to use in the dropdown
     interests = []
     unit_number = request.form.get('unit_number')
-
+    print(unit_number)
     if request.method == 'POST':
         move_in_date = request.form.get('move_in_date')
         roommate_count = request.form.get('roommate_count')
@@ -564,10 +564,11 @@ def search_interest():
                 conditions.append("I.MoveInDate = %s")
                 params.append(move_in_date)
             if roommate_count:
-                conditions.append("")
+                conditions.append("I.roommatecnt = %s")
                 params.append(roommate_count)
-            if unit_number:
-                conditions.append("I.UnitRentID = %s")
+            if unit_number != "blank":
+                print("hi")
+                conditions.append("I.UnitRentId = %s")
                 params.append(unit_number)
             if conditions:
                 query += " WHERE " + " AND ".join(conditions)

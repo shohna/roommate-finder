@@ -130,14 +130,14 @@
             {% for interest in interests %}
                 <tr>
                     <td>{{ interest[0] }}</td>
-                    <td>{{ interest[1] }}</td>
                     <td>{{ interest[2] }}</td>
-                    <td>{{ interest[9] }}</td>
                     <td>{{ interest[3] }}</td>
+                    <td>{{ interest[9] }}</td>
                     <td>{{ interest[4] }}</td>
+                    <td>{{ interest[5] }}</td>
                     <td>{{ 'Male' if interest[5] == 1 else 'Female' }}</td>
-                    <td>{{ interest[6] }}</td>
                     <td>{{ interest[7] }}</td>
+                    <td>{{ interest[8] }}</td>
                 </tr>
             {% endfor %}
         </table>
