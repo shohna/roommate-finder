@@ -100,22 +100,17 @@
                 <label for="roommate_count">Roommate Count:</label>
                 <input type="number" id="roommate_count" name="roommate_count" min="0">
                 <br>
-                <button type="submit">Search</button>
-            </form>
-        </div>
-        <div class="right-column">
-            <h1>View Interests</h1>
-            <form method="POST" action="/search_interest">
                 <label for="unit_number">Choose a Unit Number:</label>
                 <select name="unit_number" id="unit_number" required>
                     <option value="blank"></option>
                     {% for unit in unit_numbers %}
-                    <option value="{{ unit[0] }}" {% if unit[0]|string == selected_unit_number|string %}selected{% endif %}>
+                    <option value="{{ unit[3] }}" {% if unit[0]|string == selected_unit_number|string %}selected{% endif %}>
                         {{ unit[1] }} - {{ unit[2] }} - {{ unit[0] }}
                     </option>
                     {% endfor %}
                 </select>
-                <button type="submit">Show Interests</button>
+                <br>
+                <button type="submit">Search</button>
             </form>
         </div>
     </div>
@@ -125,6 +120,7 @@
                 <th>Username</th>
                 <th>First Name</th>
                 <th>Last Name</th>
+                <th>Unit Number</th>
                 <th>Roommates</th>
                 <th>Move-in Date</th>
                 <th>Gender</th>
@@ -136,6 +132,7 @@
                     <td>{{ interest[0] }}</td>
                     <td>{{ interest[1] }}</td>
                     <td>{{ interest[2] }}</td>
+                    <td>{{ interest[9] }}</td>
                     <td>{{ interest[3] }}</td>
                     <td>{{ interest[4] }}</td>
                     <td>{{ 'Male' if interest[5] == 1 else 'Female' }}</td>

@@ -82,7 +82,7 @@
             </div>
             <div class="button-container">
                 <form action="/add_to_favorites" method="POST">
-                    <input type="hidden" name="unit_id" value="{{ unit_info.UnitRentID }}">
+                    <input type="hidden" name="unit_id" value="{{ unit_info[0] }}">
                     <button type="submit">Add to Favorites</button>
                 </form>
                 <br>

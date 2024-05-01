@@ -280,7 +280,6 @@ def unit_building_info():
             # flash('Unit not found')
             error_message="Unit not found"
             return render_template('unit_building_info.html', unit_info=unit_info, error_message=error_message)
-            return redirect(url_for('home'))
     else:
         return redirect(url_for('login'))
 
@@ -549,56 +548,76 @@ def search_interest():
     selected_unit_number = request.args.get('unit_number', None)
 
     cursor = conn.cursor()
-    cursor.execute('SELECT unitNumber, CompanyName, BuildingName FROM ApartmentUnit')
+    cursor.execute('SELECT unitNumber, CompanyName, BuildingName, unitrentid FROM ApartmentUnit')
     unit_numbers = cursor.fetchall()  # Fetch all unit numbers once to use in the dropdown
     interests = []
+    unit_number = request.form.get('unit_number')
 
     if request.method == 'POST':
-        unit_number = request.form.get('unit_number')
         move_in_date = request.form.get('move_in_date')
         roommate_count = request.form.get('roommate_count')
+        print(unit_number)
+        print(move_in_date)
+        print(roommate_count)
         # SQL query to fetch interests based on move-in date and/or roommate count
-        if move_in_date or roommate_count:  # Filter by move-in date and/or roommate count
+        if move_in_date or roommate_count or unit_number:  # Filter by move-in date and/or roommate count
             query = '''
-                SELECT I.username, I.UnitRentID, U.first_name, U.last_name, I.RoommateCnt, I.MoveInDate, U.gender, U.email, U.Phone
+                SELECT I.username, I.UnitRentID, U.first_name, U.last_name, I.RoommateCnt, I.MoveInDate, U.gender, U.email, U.Phone, A.unitnumber
                 FROM Interests AS I
                 JOIN Users AS U ON I.username = U.username
+                JOIN ApartmentUnit As A ON A.unitrentid = I.unitrentid
             '''
             params = []
             conditions = []
+            print("a")
             if move_in_date:
                 conditions.append("I.MoveInDate = %s")
                 params.append(move_in_date)
+                print("b")
             if roommate_count:
-                conditions.append("I.RoommateCnt = %s")
+                conditions.append("")
                 params.append(roommate_count)
-
+                print("c")
+            if unit_number:
+                conditions.append("I.UnitRentID = %s")
+                params.append(unit_number)
             if conditions:
                 query += " WHERE " + " AND ".join(conditions)
+                print(query)
+                print(params)
                 cursor.execute(query, tuple(params))
                 interests = cursor.fetchall()
+                print("d")
 
         if not interests:
             # flash('No results found. Try different criteria.', 'info')
             error_message="No results found. Try different criteria."
-            pass
-
+        print("e")
         cursor.close()
         print(interests)
         return render_template('search_interest.html', interests=interests, unit_numbers=unit_numbers, selected_unit_number=selected_unit_number,error_message=error_message)
-    elif request.method == 'GET':  # Handle GET request for viewing interests
-        unit_number = request.args.get('unit_number')
-        if unit_number:
-            query = '''
-                SELECT I.username, U.first_name, U.last_name, I.RoommateCnt, I.MoveInDate
-                FROM Interests I
-                JOIN Users U ON I.username = U.username
-                JOIN ApartmentUnit AU ON I.UnitRentID = AU.UnitRentID
-                WHERE AU.unitNumber = %s
+    elif request.method == 'GET':
+        params = []
+        conditions = []
+        print("get")
+        query = '''
+                SELECT I.username, I.UnitRentID, U.first_name, U.last_name, I.RoommateCnt, I.MoveInDate, U.gender, U.email, U.Phone, A.unitnumber
+                FROM Interests AS I
+                JOIN Users AS U ON I.username = U.username
+                JOIN ApartmentUnit As A ON A.unitrentid = I.unitrentid
             '''
-            cursor.execute(query, (unit_number,))
+        print(selected_unit_number)
+        if selected_unit_number:
+            conditions.append("A.UnitNumber = %s")
+            params.append(selected_unit_number)
+            print(selected_unit_number)
+        if conditions:
+            query += " WHERE " + " AND ".join(conditions)
+            print(query)
+            print(params)
+            cursor.execute(query, tuple(params))
             interests = cursor.fetchall()
-
+            print("d")
     return render_template('search_interest.html',unit_number=unit_number, interests=interests, unit_numbers=unit_numbers)
 
 
