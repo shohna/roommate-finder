@@ -561,9 +561,6 @@ def search_interest():
                 interests = cursor.fetchall()
 
         return render_template('search_interest.html',unit_number=unit_number, interests=interests, unit_numbers=unit_numbers)
-    except Exception as e:
-        logging.error(f"Error in search_interest route: {e}")
-        return "An error occurred. Please try again later.", 500  # Return an error response
 
 
 
