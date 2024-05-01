@@ -50,6 +50,7 @@ def login():
             return redirect(url_for('home'))
         else:
             flash('Wrong username or password')
+            pass
 
     return render_template('login.html')
 
@@ -60,7 +61,7 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'username' not in session:
-            flash("Not accessible. Please log in.")
+            # flash("Not accessible. Please log in.")
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
@@ -87,7 +88,7 @@ def register():
         cursor.execute(query, (username, hashed_password, first_name, last_name, dob, gender, email, phone))
         conn.commit()
         cursor.close()
-        flash('Registration successful. Please log in.')
+        flash('Registration successful!')
         return redirect(url_for('login'))
     return render_template('register.html')
 
@@ -107,12 +108,14 @@ def logout():
     session.pop('username', None)
     return redirect(url_for('index'))
 
+
 @app.route('/search_units', methods=['GET'])
 @login_required
 def search_units():
     building_name = escape(request.args.get('building_name'))
     company_name = escape(request.args.get('company_name'))
-    pet_name = escape(request.args.get('pet_name'))
+    pet_allowed = request.args.get('pet_allowed') == 'on'  # Check if pet is allowed
+    # pet_name = escape(request.args.get('pet_name'))
     
     cursor = conn.cursor()
     error_message = None
@@ -122,30 +125,60 @@ def search_units():
         query = 'SELECT * FROM ApartmentUnit WHERE CompanyName = %s AND BuildingName = %s'
         cursor.execute(query, (company_name, building_name))
         units = cursor.fetchall()
-    elif pet_name:
-        # Add logic to search based on pet name
-        pass
+    if pet_allowed:
+        query = '''
+            SELECT AU.UnitRentID, AU.CompanyName, AU.BuildingName, AU.unitNumber, AU.MonthlyRent, AU.squareFootage, AU.AvailableDateForMoveIn,
+                   PP.isAllowed AS pet_allowed, PP.RegistrationFee, PP.MonthlyFee
+            FROM ApartmentUnit AU
+            JOIN PetPolicy PP ON AU.CompanyName = PP.CompanyName AND AU.BuildingName = PP.BuildingName
+            JOIN Pets P ON P.username = %s AND PP.PetType = P.PetType AND PP.PetSize = P.PetSize
+            WHERE PP.isAllowed = True AND PP.CompanyName = %s AND PP.BuildingName = %s
+        '''
+        cursor.execute(query, (session['username'],company_name, building_name))
+        units = cursor.fetchall()
     else:
         error_message = 'Please provide either company name and building name or pet name.'
 
     if units:
+        unit_comments={}
+        new_units=[]
         # Fetch comments for each unit
-        unit_comments = {}
         for unit in units:
             unit_comments[unit[0]] = fetch_comments_for_unit(unit[0])
-        
-        new_units = []
-        for unit in units:
-            # Add logic to calculate average rent
-            avg_rent = 0
+            avg_price_query = '''
+                    SELECT AVG(MonthlyRent) AS avg_rent
+                    FROM ApartmentUnit AS AU
+                    WHERE SquareFootage BETWEEN 0.9 * %s AND 1.1 * %s 
+                    AND UnitRentID IN (
+                        SELECT AU.UnitRentID
+                        FROM ApartmentUnit AU
+                        JOIN ApartmentBuilding AB ON AU.CompanyName = AB.CompanyName AND AU.BuildingName = AB.BuildingName
+                        WHERE AB.AddrCity = (
+                            SELECT AddrCity
+                            FROM ApartmentBuilding
+                            WHERE CompanyName = %s
+                            AND BuildingName = %s
+                        )
+                    )
+            '''
+            # Convert unit[5] (SquareFootage) to float or decimal if necessary
+            avg_price_params = (float(unit[5]), float(unit[5]), unit[1], unit[2])  # Assuming unit[1] is CompanyName, unit[2] is BuildingName
+            cursor.execute(avg_price_query, avg_price_params)
+            avg_rent = cursor.fetchone()[0]  # Get the average rent
             unit = unit + (math.ceil(avg_rent),)  # Add the average rent to the unit tuple
             new_units.append(unit)
 
         cursor.close()
-        return render_template('unit_search.html', username=escape(session['username']), units=new_units, unit_comments=unit_comments, error_message=error_message)
+        print(new_units)
+        if pet_allowed:
+            return render_template('unit_search_pet.html', username=escape(session['username']), units=new_units, unit_comments=unit_comments, error_message=error_message)
+        else:
+            return render_template('unit_search.html', username=escape(session['username']), units=new_units, unit_comments=unit_comments, error_message=error_message)
+   
     else:
         cursor.close()
         return render_template('unit_search.html', username=escape(session['username']), error_message=error_message)
+
 
 
 @app.route('/add_comment', methods=['POST'])
@@ -216,7 +249,7 @@ def search_units_by_pet():
         avg_rent = cursor.fetchone()[0]  # Get the average rent
         unit = unit + (math.ceil(avg_rent),)  # Add the average rent to the unit tuple
         new_units.append(unit)
-    print(new_units)
+
     cursor.close()
     error_message = 'No matching apartment units found. Please check your input and try again.' if not units else None
     return render_template('unit_search_pet.html', username=escape(session['username']), units=new_units, error_message=error_message, unit_comments=unit_comments)
@@ -225,6 +258,7 @@ def search_units_by_pet():
 @app.route('/unit_building_info', methods=['GET'])
 @login_required
 def unit_building_info():
+    error_message = None
     if 'username' in session:
         unit_id = request.args.get('unit_id')
         cursor = conn.cursor()
@@ -243,7 +277,9 @@ def unit_building_info():
         if unit_info:
             return render_template('unit_building_info.html', unit_info=unit_info)
         else:
-            flash('Unit not found')
+            # flash('Unit not found')
+            error_message="Unit not found"
+            return render_template('unit_building_info.html', unit_info=unit_info, error_message=error_message)
             return redirect(url_for('home'))
     else:
         return redirect(url_for('login'))
@@ -330,6 +366,7 @@ def edit_pet():
 @app.route('/estimate_rent', methods=['GET', 'POST'])
 @login_required
 def estimate_rent():
+    error_message=None
     if request.method == 'POST':
         zipcode = request.form['zipcode']
         num_rooms = request.form['num_rooms']
@@ -337,23 +374,14 @@ def estimate_rent():
         # Calculate average monthly rent based on user input
         average_rent = calculate_average_rent(zipcode, num_rooms)
         if average_rent is None:
-            flash('No available units satisfy the given criteria.')
-            return render_template('rent_estimate.html')        
+            error_message="No available units satisfy the given criteria"
+            # flash('No available units satisfy the given criteria.')
+            return render_template('rent_estimate.html',error_message=error_message)        
         # Pass the calculated average rent to the template for rendering
         return render_template('rent_estimate.html', average_rent=round(average_rent, 2))
     
     return render_template('rent_estimate.html')
 
-
-# @app.route('/view_interests', methods=['GET', 'POST'])
-# @login_required
-# def view_interests():
-#     # Initialize interests outside the try-except to ensure it's always defined
-#     interests = []
-
-#     # Fetch all units to populate the form dropdown
-#     unit_numbers = []
-#     try:
         
 
 
@@ -361,7 +389,7 @@ def estimate_rent():
 @login_required
 def post_interest():
     if 'username' not in session:
-        flash('Please login to post interests.')
+        # flash('Please login to post interests.')
         return redirect(url_for('login'))
 
     # Get unit_id from the URL query if available
@@ -376,7 +404,7 @@ def post_interest():
         cursor.execute(query, (session['username'], unit_id, roommate_count, move_in_date))
         conn.commit()
         cursor.close()
-        flash('Interest posted successfully.')
+        # flash('Interest posted successfully.')
         return redirect(url_for('search_interest'))
     
     # Fetch available units to select from
@@ -395,10 +423,11 @@ def post_interest():
 @login_required
 def advanced_search():
     if request.method == 'POST':
-        expected_monthly_rent = request.form['expected_monthly_rent']
+        min_rent = request.form['min_rent']
+        max_rent = request.form['max_rent']
         amenities = request.form.getlist('amenities')
-        query = 'SELECT * FROM ApartmentUnit WHERE MonthlyRent <= %s'
-        params = [expected_monthly_rent]
+        query = 'SELECT * FROM ApartmentUnit WHERE MonthlyRent >= %s AND MonthlyRent <= %s'
+        params = [min_rent, max_rent]
         if amenities:
             query += ' AND UnitRentID IN (SELECT UnitRentID FROM AmenitiesIn WHERE aType IN %s)'
             params.append(tuple(amenities))
@@ -429,10 +458,12 @@ def advanced_search():
             avg_rent = cursor.fetchone()[0]  # Get the average rent
             unit = unit + (math.ceil(avg_rent),)  # Add the average rent to the unit tuple
             new_units.append(unit)
+            # print(unit)
 
         # Storing search criteria in the session to pass to the results page
         session['search_criteria'] = {
-            'expected_monthly_rent': expected_monthly_rent,
+            'min_rent': min_rent,
+            'max_rent': max_rent,
             'amenities': amenities,
         }
 
@@ -446,15 +477,16 @@ def advanced_search():
 def search_results():
     # Retrieve search criteria from session
     search_criteria = session.get('search_criteria', {})
-    expected_monthly_rent = search_criteria.get('expected_monthly_rent', 0)
+    min_rent = search_criteria.get('min_rent', 0)
+    max_rent = search_criteria.get('max_rent', 0)
     amenities = search_criteria.get('amenities', [])
 
     base_query = '''
         SELECT AU.UnitRentID, AU.CompanyName, AU.BuildingName, AU.unitNumber, AU.MonthlyRent, AU.SquareFootage, AU.AvailableDateForMoveIn
         FROM ApartmentUnit AU
-        WHERE AU.MonthlyRent <= %s
+        WHERE MonthlyRent >= %s AND MonthlyRent <= %s
     '''
-    params = [expected_monthly_rent]
+    params = [min_rent, max_rent]
     if amenities:
         base_query += ' AND AU.UnitRentID IN (SELECT UnitRentID FROM AmenitiesIn WHERE aType IN %s)'
         params.append(tuple(amenities))
@@ -487,7 +519,8 @@ def search_results():
         new_units.append(unit)
 
     cursor.close()
-    return render_template('search_results.html', units=new_units, selected_amenities=amenities, expected_rent=expected_monthly_rent, unit_comments=unit_comments)
+    print(new_units)
+    return render_template('search_results.html', units=new_units, selected_amenities=amenities, min_rent=min_rent, max_rent=max_rent, unit_comments=unit_comments)
 
 def fetch_amenities():
     cursor = conn.cursor()
@@ -495,7 +528,6 @@ def fetch_amenities():
     amenities = cursor.fetchall()
     cursor.close()
     return amenities
-
 
 
 @app.route('/search')
@@ -508,97 +540,70 @@ def search():
     cursor.close()
     return render_template('search.html', amenities=amenities)
 
-    
- 
+
 @app.route('/search_interest', methods=['GET', 'POST'])
 @login_required
 def search_interest():
+    error_message=None
+    # Get unit_id from the URL query if available
+    selected_unit_number = request.args.get('unit_number', None)
+
+    cursor = conn.cursor()
+    cursor.execute('SELECT unitNumber, CompanyName, BuildingName FROM ApartmentUnit')
+    unit_numbers = cursor.fetchall()  # Fetch all unit numbers once to use in the dropdown
+    interests = []
+
     if request.method == 'POST':
+        unit_number = request.form.get('unit_number')
         move_in_date = request.form.get('move_in_date')
         roommate_count = request.form.get('roommate_count')
-        cursor = conn.cursor()
-        cursor.execute('SELECT unitNumber, CompanyName, BuildingName FROM ApartmentUnit')
-        unit_numbers = cursor.fetchall()
-
-        interests = []  # Initialize interests list
-
-        if request.method == 'POST':
-            unit_number = request.form.get('unit_number')
-            if unit_number:
-                query = '''
-                    SELECT I.username, U.first_name, U.last_name, I.RoommateCnt, I.MoveInDate
-                    FROM Interests I
-                    JOIN Users U ON I.username = U.username
-                    JOIN ApartmentUnit AU ON I.UnitRentID = AU.UnitRentID
-                    WHERE AU.unitNumber = %s
-                '''
-                cursor.execute(query, (unit_number,))
-                interests = cursor.fetchall()
-
-            move_in_date = request.form.get('move_in_date')
-            roommate_count = request.form.get('roommate_count')
-            if move_in_date and roommate_count:
-                query = """
-                        SELECT I.username, U.first_name, U.last_name, U.DOB, U.gender, U.email, U.Phone
-                        FROM Interests AS I
-                        JOIN Users AS U ON I.username = U.username
-                        WHERE I.MoveInDate = %s AND I.RoommateCnt = %s
-                        """
-                cursor.execute(query, (move_in_date, roommate_count))
-                interests = cursor.fetchall()
-
-        elif request.method == 'GET':  # Handle GET request for viewing interests
-            unit_number = request.args.get('unit_number')
-            if unit_number:
-                query = '''
-                    SELECT I.username, U.first_name, U.last_name, I.RoommateCnt, I.MoveInDate
-                    FROM Interests I
-                    JOIN Users U ON I.username = U.username
-                    JOIN ApartmentUnit AU ON I.UnitRentID = AU.UnitRentID
-                    WHERE AU.unitNumber = %s
-                '''
-                cursor.execute(query, (unit_number,))
-                interests = cursor.fetchall()
-
-        return render_template('search_interest.html',unit_number=unit_number, interests=interests, unit_numbers=unit_numbers)
-
-
-
         # SQL query to fetch interests based on move-in date and/or roommate count
-        query = """
-                SELECT I.username, I.UnitRentID, U.first_name, U.last_name, U.DOB, U.gender, U.email, U.Phone
+        if move_in_date or roommate_count:  # Filter by move-in date and/or roommate count
+            query = '''
+                SELECT I.username, I.UnitRentID, U.first_name, U.last_name, I.RoommateCnt, I.MoveInDate, U.gender, U.email, U.Phone
                 FROM Interests AS I
                 JOIN Users AS U ON I.username = U.username
-                """
-        
-        # Check if both move-in date and roommate count are provided
-        if move_in_date and roommate_count:
-            query += "WHERE I.MoveInDate = %s AND I.RoommateCnt = %s"
-            cursor.execute(query, (move_in_date, roommate_count))
-        
-        # Check if only move-in date is provided
-        elif move_in_date:
-            query += "WHERE I.MoveInDate = %s"
-            cursor.execute(query, (move_in_date,))
-        
-        # Check if only roommate count is provided
-        elif roommate_count:
-            query += "WHERE I.RoommateCnt = %s"
-            cursor.execute(query, (roommate_count,))
-        
-        else:
-            # If no criteria provided, return empty result
-            interests = []
-            flash('Please provide either move-in date, roommate count, or both for the search.', 'error')
-            return render_template('search_interest.html', interests=interests)
+            '''
+            params = []
+            conditions = []
+            if move_in_date:
+                conditions.append("I.MoveInDate = %s")
+                params.append(move_in_date)
+            if roommate_count:
+                conditions.append("I.RoommateCnt = %s")
+                params.append(roommate_count)
 
-        interests = cursor.fetchall()
+            if conditions:
+                query += " WHERE " + " AND ".join(conditions)
+                cursor.execute(query, tuple(params))
+                interests = cursor.fetchall()
+
+        if not interests:
+            # flash('No results found. Try different criteria.', 'info')
+            error_message="No results found. Try different criteria."
+            pass
+
         cursor.close()
-        
-        # Pass the fetched interests to the HTML template for rendering
-        return render_template('search_interest.html', interests=interests)
-    
-    return render_template('search_interest.html')
+        print(interests)
+        return render_template('search_interest.html', interests=interests, unit_numbers=unit_numbers, selected_unit_number=selected_unit_number,error_message=error_message)
+    elif request.method == 'GET':  # Handle GET request for viewing interests
+        unit_number = request.args.get('unit_number')
+        if unit_number:
+            query = '''
+                SELECT I.username, U.first_name, U.last_name, I.RoommateCnt, I.MoveInDate
+                FROM Interests I
+                JOIN Users U ON I.username = U.username
+                JOIN ApartmentUnit AU ON I.UnitRentID = AU.UnitRentID
+                WHERE AU.unitNumber = %s
+            '''
+            cursor.execute(query, (unit_number,))
+            interests = cursor.fetchall()
+
+    return render_template('search_interest.html',unit_number=unit_number, interests=interests, unit_numbers=unit_numbers)
+
+
+
+
 
 
 def calculate_average_rent(zipcode, num_rooms):
@@ -624,7 +629,7 @@ def calculate_average_rent(zipcode, num_rooms):
 @login_required
 def add_to_favorites():
     if 'username' not in session:
-        flash('Please log in to add favorites.')
+        # flash('Please log in to add favorites.')
         return redirect(url_for('login'))
 
     username = session['username']
@@ -633,12 +638,13 @@ def add_to_favorites():
     # Check if the unit is already in favorites
     cursor.execute('SELECT * FROM Favorites WHERE username = %s AND UnitRentID = %s', (username, unit_id))
     if cursor.fetchone():
-        flash('Unit already in favorites.')
+        # flash('Unit already in favorites.')
+        pass
     else:
         # Add the unit to favorites
         cursor.execute('INSERT INTO Favorites (username, UnitRentID) VALUES (%s, %s)', (username, unit_id))
         conn.commit()
-        flash('Unit added to favorites.')
+        # flash('Unit added to favorites.')
     cursor.close()
     return redirect(url_for('favorites'))
 

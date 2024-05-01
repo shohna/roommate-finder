@@ -5,13 +5,20 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 0 20px; /* Added margin to left and right sides */
+            margin: 0;
             padding: 0;
             background-color: #f4f4f4;
         }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+        }
         h1, h2, h3, h4 {
             color: #333;
-            margin-bottom: 10px;
         }
         form {
             margin-bottom: 20px;
@@ -21,6 +28,8 @@
             margin-bottom: 5px;
         }
         input[type="text"],
+        input[type="number"],
+        textarea,
         input[type="submit"] {
             width: 100%;
             padding: 8px;
@@ -43,26 +52,57 @@
             padding: 0;
         }
         li {
-            margin-bottom: 10px;
-            padding: 15px;
-            border: 1px solid #ccc;
+            margin-bottom: 20px; /* Increased margin for better separation */
+            border: 1px solid #ccc; /* Added border for each unit */
+            padding: 15px; /* Added padding for better spacing */
             border-radius: 5px;
-            background-color: #fff;
+        }
+        .comment-section {
+            margin-top: 20px;
+        }
+        .comment {
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .comment .username {
+            font-weight: bold;
+            color: #007bff;
+        }
+        .comment .rating {
+            color: #28a745;
+            font-style: italic;
         }
         .back-link {
-            display: inline-block;
-            margin-top: 20px;
-            margin-bottom: 20px; /* Added margin at the bottom */
-            padding: 10px 20px; /* Added padding to the button */
-            background-color: #007bff;
-            color: #fff;
-            border: none;
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
             border-radius: 5px;
+            box-sizing: border-box;
+            color: #007bff;
             text-decoration: none;
-            cursor: pointer;
         }
         .back-link:hover {
-            background-color: #0056b3;
+            text-decoration: underline;
+        }
+        .error-message {
+            color: red;
+            margin-top: 10px;
+        }
+        .submit-comment {
+            display: block;
+            margin-top: 20px;
+            color: white;
+            background-color: #007bff;
+            text-decoration: none;  
+            border-radius: 5px;
+            border: none;
+            padding: 10px;
+        }
+        .comment_text {
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -92,7 +132,7 @@
                     <strong>Average Rent for similar area:</strong> {{ unit.10 }}<br>
                     <strong>Your pet Allowed:</strong> {{ unit.7 }}<br>
                     <strong>Pet Registration Fee:</strong> {{ unit.8 }}<br>
-                    <strong>Pet Monthly Fee:</strong> {{ unit.9 }}<br>
+                    <strong>Pet Monthly Fee:</strong> {{ unit.9 }}<br><br>
                     <form method="POST" action="{{ url_for('add_to_favorites') }}">
                         <input type="hidden" name="unit_id" value="{{ unit[0] }}">
                         <input type="submit" value="Add to Favorites">

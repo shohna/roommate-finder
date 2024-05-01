@@ -60,33 +60,37 @@
 </head>
 <body>
     <div class="info-container">
-        <h1>Unit and Building Information</h1>
-        <div class="unit-details bordered-box">
-            <h2>Unit Details</h2>
-            <p>Unit ID: {{ unit_info[0] }}</p>
-            <p>Monthly Rent: {{ unit_info[4] }}</p>
-            <p>Square Footage: {{ unit_info[5] }}</p>
-            <p>Available Date for Move-In: {{ unit_info[6] }}</p>
-        </div>
-        <div class="building-details bordered-box">
-            <h2>Building Details</h2>
-            <p>Company Name: {{ unit_info[1] }}</p>
-            <p>Building Name: {{ unit_info[2] }}</p>
-            <p>Address: {{ unit_info[9] }} {{ unit_info[10] }}, {{ unit_info[11] }}, {{ unit_info[12] }} {{ unit_info[13] }}</p>
-            <p>Year Built: {{ unit_info[16] }}</p>
-        </div>
-        <div class="amenities bordered-box">
-            <h2>Amenities</h2>
-            <p>{{ unit_info[17] }}</p>
-        </div>
-        <div class="button-container">
-            <form action="/add_to_favorites" method="POST">
-                <input type="hidden" name="unit_id" value="{{ unit_info.UnitRentID }}">
-                <button type="submit">Add to Favorites</button>
-            </form>
-            <br>
-            <a href="{{ url_for('home') }}">Back to Home</a>
-        </div>
+        {% if unit_info %}
+            <h1>Unit and Building Information</h1>
+            <div class="unit-details bordered-box">
+                <h2>Unit Details</h2>
+                <p>Unit ID: {{ unit_info[0] }}</p>
+                <p>Monthly Rent: {{ unit_info[4] }}</p>
+                <p>Square Footage: {{ unit_info[5] }}</p>
+                <p>Available Date for Move-In: {{ unit_info[6] }}</p>
+            </div>
+            <div class="building-details bordered-box">
+                <h2>Building Details</h2>
+                <p>Company Name: {{ unit_info[1] }}</p>
+                <p>Building Name: {{ unit_info[2] }}</p>
+                <p>Address: {{ unit_info[9] }} {{ unit_info[10] }}, {{ unit_info[11] }}, {{ unit_info[12] }} {{ unit_info[13] }}</p>
+                <p>Year Built: {{ unit_info[16] }}</p>
+            </div>
+            <div class="amenities bordered-box">
+                <h2>Amenities</h2>
+                <p>{{ unit_info[17] }}</p>
+            </div>
+            <div class="button-container">
+                <form action="/add_to_favorites" method="POST">
+                    <input type="hidden" name="unit_id" value="{{ unit_info.UnitRentID }}">
+                    <button type="submit">Add to Favorites</button>
+                </form>
+                <br>
+                <a href="{{ url_for('home') }}">Back to Home</a>
+            </div>
+        {% else %}
+            <p class="error-message">{{ error_message }}</p>
+        {% endif %}
     </div>
 
 </body>
