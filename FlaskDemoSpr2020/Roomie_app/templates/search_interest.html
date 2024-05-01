@@ -144,6 +144,8 @@
                 </tr>
             {% endfor %}
         </table>
+    {% else %}
+        <p class="error-message">{{ error_message }}</p>
     {% endif %}
     <a href="{{ url_for('home') }}" class="back-link">Back to Home</a>
 </body>

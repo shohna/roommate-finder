@@ -49,7 +49,7 @@ def login():
             session['username'] = username
             return redirect(url_for('home'))
         else:
-            # flash('Wrong username or password')
+            flash('Wrong username or password')
             pass
 
     return render_template('login.html')
@@ -88,7 +88,7 @@ def register():
         cursor.execute(query, (username, hashed_password, first_name, last_name, dob, gender, email, phone))
         conn.commit()
         cursor.close()
-        # flash('Registration successful. Please log in.')
+        flash('Registration successful!')
         return redirect(url_for('login'))
     return render_template('register.html')
 
@@ -258,6 +258,7 @@ def search_units_by_pet():
 @app.route('/unit_building_info', methods=['GET'])
 @login_required
 def unit_building_info():
+    error_message = None
     if 'username' in session:
         unit_id = request.args.get('unit_id')
         cursor = conn.cursor()
@@ -277,6 +278,8 @@ def unit_building_info():
             return render_template('unit_building_info.html', unit_info=unit_info)
         else:
             # flash('Unit not found')
+            error_message="Unit not found"
+            return render_template('unit_building_info.html', unit_info=unit_info, error_message=error_message)
             return redirect(url_for('home'))
     else:
         return redirect(url_for('login'))
@@ -363,6 +366,7 @@ def edit_pet():
 @app.route('/estimate_rent', methods=['GET', 'POST'])
 @login_required
 def estimate_rent():
+    error_message=None
     if request.method == 'POST':
         zipcode = request.form['zipcode']
         num_rooms = request.form['num_rooms']
@@ -370,8 +374,9 @@ def estimate_rent():
         # Calculate average monthly rent based on user input
         average_rent = calculate_average_rent(zipcode, num_rooms)
         if average_rent is None:
+            error_message="No available units satisfy the given criteria"
             # flash('No available units satisfy the given criteria.')
-            return render_template('rent_estimate.html')        
+            return render_template('rent_estimate.html',error_message=error_message)        
         # Pass the calculated average rent to the template for rendering
         return render_template('rent_estimate.html', average_rent=round(average_rent, 2))
     
@@ -539,7 +544,7 @@ def search():
 @app.route('/search_interest', methods=['GET', 'POST'])
 @login_required
 def search_interest():
-
+    error_message=None
     # Get unit_id from the URL query if available
     selected_unit_number = request.args.get('unit_number', None)
 
@@ -586,11 +591,12 @@ def search_interest():
 
         if not interests:
             # flash('No results found. Try different criteria.', 'info')
+            error_message="No results found. Try different criteria."
             pass
 
     cursor.close()
     print(interests)
-    return render_template('search_interest.html', interests=interests, unit_numbers=unit_numbers, selected_unit_number=selected_unit_number)
+    return render_template('search_interest.html', interests=interests, unit_numbers=unit_numbers, selected_unit_number=selected_unit_number,error_message=error_message)
 
 
 

@@ -90,7 +90,7 @@
     {% if average_rent %}
         <p>The average monthly rent for your criteria is ${{ average_rent }}</p>
     {% else %}
-        <p>No data available for the specified criteria.</p>
+        <p class="error-message">{{ error_message }}</p>
     {% endif %}
     
     <a href="{{ url_for('home') }}" class="back-link">Back to Home</a>
